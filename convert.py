@@ -34,6 +34,9 @@ def convertOLM(olmPath, outputDir):
                 print(f"Could not read {messagePath} due to {type(e)}, skipping.")
                 print(e)
                 continue
+            
+            # Close messageFile
+            messageFile.close()
 
             # Write converted message to file
             # TODO: Files are named using a simple counter - Should change this to something more meaningful, should create a directory hierarchy 
