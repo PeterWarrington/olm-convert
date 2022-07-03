@@ -4,25 +4,27 @@ import base64
 import warnings
 import html
 
-def processMessage(path):
+# Reads OLM format XML message at inputFilePath and converts it to an EML file at outputFilePath
+def processMessage(inputFilePath, outputFilePath):
     emlOutputString = ""
 
     # Read from file
-    xmlTree = ET.parse(path)
+    xmlTree = ET.parse(inputFilePath)
     root = xmlTree.getroot()
 
     # Check number of <email> elements below <emails> root element is 1
     if (len(root) != 1):
         raise ValueError(f"Expected one email beneath root, got {len(root)}.")
     
-    # Read date of email (e.g. "2022-05-26T17:55:40")
+    # Read date of email (e.g. "2022-05-26T17:55:40" -> "Thu, 26 May 2022 18:55:40 +0100")
     sourceDateElm = xmlTree.getroot()[0].find("OPFMessageCopySentTime")
     if (sourceDateElm == None):
         raise ValueError("Sent date could not be found in source.")
 
     sourceDateStr = sourceDateElm.text
     try:
-        dateEmlValue = datetime.strptime(sourceDateStr, "%Y-%m-%dT%X")
+        srcDate = datetime.strptime(sourceDateStr, "%Y-%m-%dT%X")
+        dateEmlValue = srcDate.strftime("%a, %m %B %Y %X %z")
         dateEmlStr = f"Date: {dateEmlValue}"
     except ValueError:
         raise ValueError("Unexpected sent time format in source.")
@@ -118,7 +120,7 @@ def processMessage(path):
     emlOutputString += "\n" + htmlContentEmlStr
 
     # Write eml message
-    writeHandle = open("message.eml", "w")
+    writeHandle = open(outputFilePath, "w")
     writeHandle.write(emlOutputString)
     writeHandle.close()
 
