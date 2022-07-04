@@ -1,3 +1,4 @@
+import sys
 import zipfile
 import re
 from pathlib import Path
@@ -6,6 +7,19 @@ from datetime import datetime
 import base64
 import warnings
 import html
+
+# Command line interface
+def main():
+    args = sys.argv[1:]
+
+    print("OLM Convert - (https://github.com/PeterWarrington/olm-convert)")
+    
+    if (len(args) != 2):
+        print("USAGE: python3 olmConvert.py <path to OLM file> <output directory>")
+    else:
+        print(f"Beginning conversion of {args[0]}....")
+        convertOLM(args[0], args[1])
+        print(f"Conversion complete! Files have been written to directory at {args[1]}.")
 
 # Convert OLM file specified by olmPath, creating a directory of EML files at outputDir
 def convertOLM(olmPath, outputDir):
@@ -207,3 +221,6 @@ def addressEncode(addressElm):
         raise ValueError("Email address not found in emailAddress element.")
 
     return f"{encodedName} <{address}>"
+
+if __name__ == "__main__":
+    main()
