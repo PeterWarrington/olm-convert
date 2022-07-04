@@ -7,6 +7,7 @@ from datetime import datetime
 import base64
 import warnings
 import html
+import os
 
 # Command line interface
 def main():
@@ -31,7 +32,6 @@ def convertOLM(olmPath, outputDir):
         filterToMessagesRegex = re.compile(r"message_\d{5}.xml$")
         messageFileList = list(filter(filterToMessagesRegex.search, fileList))
 
-        i = 0
         for messagePath in messageFileList:
             # Open xml message file
             messageFile = olmZip.open(messagePath)
@@ -60,13 +60,21 @@ def convertOLM(olmPath, outputDir):
             emailPathStr = f"{outputDir}/{accountName}/{emailFolder}"
             Path(emailPathStr).mkdir(parents=True, exist_ok=True)
 
-            # Write converted message to file
-            outputFile = open(f"{emailPathStr}/{messageEml.subject} - {messageEml.date}.eml", "w")
-            outputFile.write(messageEmlStr)
-            outputFile.close()
+            # Assemble safe eml file name
+            try:
+                fileName = f"{messageEml.subject[:200]} - {messageEml.date}".replace(":", ".").replace("/", ".").replace("\\", ".")
+                fileName = ''.join([c for c in fileName if c.isalpha() or c.isdigit() or c==' ' or c=='.']).rstrip()
+                unresolvedFilePath = f"{emailPathStr}/{fileName}"
+                newPath = os.path.abspath(unresolvedFilePath)[:250] + ".eml"
+                newPath = newPath.replace("\\\\", "/").replace("\\","/")
 
-            # Increment counter used to name files
-            i += 1
+                # Write converted message to file
+                outputFile = open(newPath, "w", encoding='utf-8')
+                outputFile.write(messageEmlStr)
+                outputFile.close()
+            except Exception as e:
+                print(f"Failed to convert email with subject '{messageEml.subject}' due to error, ignoring. Error detail:")
+                print(e)
 
 class ConvertedMessage:
     emlString = ""
@@ -199,9 +207,7 @@ def processMessage(xmlString):
     emlOutputString += "\n" + htmlContentEmlStr
 
     # Return data
-    safeSubjectStr = subjectSrcStr.replace("/", ".").replace("\\", ".")[:200]
-
-    return ConvertedMessage(emlOutputString, safeSubjectStr, dateEmlValue)
+    return ConvertedMessage(emlOutputString, subjectSrcStr, dateEmlValue)
 
 # Convert email header value to RFC2047 base64 encoded UTF-8 string (https://datatracker.ietf.org/doc/html/rfc2047)
 def headerEncode(value):
