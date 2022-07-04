@@ -1,6 +1,6 @@
 # OLM Convert
 
-Converts an Outlook for Mac archive (.olm file) to a set of standard .eml messages. 
+A python utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients.
 
 Output EML messages are organised hierarchically, for example a message contained in an OLM file will be output to an EML file like `"<output directory>/example@example.com/Inbox/Subject - Mon, 04 July 2022 21:04:56.eml"`.
 
