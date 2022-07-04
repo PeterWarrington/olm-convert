@@ -28,4 +28,4 @@ Reads OLM format XML message (xmlString) and returns a ConvertedMessage object c
 Converts email header string value to RFC2047 base64 encoded UTF-8 string (<https://datatracker.ietf.org/doc/html/rfc2047>).
 
 ### addressEncode(addressElm)
-Converts <emailAddress> element ([xml.etree.ElementTree.Element](https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.Element)) to an email header value.
+Converts &lt;emailAddress&gt; element ([xml.etree.ElementTree.Element](https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.Element)) to an email header value.
