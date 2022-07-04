@@ -17,9 +17,6 @@ def convertOLM(olmPath, outputDir):
         filterToMessagesRegex = re.compile(r"message_\d{5}.xml$")
         messageFileList = list(filter(filterToMessagesRegex.search, fileList))
 
-        # Create output directory
-        Path(outputDir).mkdir(parents=True, exist_ok=True)
-
         i = 0
         for messagePath in messageFileList:
             # Open xml message file
@@ -38,9 +35,18 @@ def convertOLM(olmPath, outputDir):
             # Close messageFile
             messageFile.close()
 
+            # Assemble path to message
+            accountsPathIndex = messagePath.find("Accounts/") + 9
+            accountName = messagePath[accountsPathIndex:messagePath.find("/", accountsPathIndex)]
+
+            emailFolderIndex = messagePath.find("com.microsoft.__Messages/") + 25
+            emailFolder = messagePath[emailFolderIndex:messagePath.rfind("/")]
+
+            emailPathStr = f"{outputDir}/{accountName}/{emailFolder}"
+            Path(emailPathStr).mkdir(parents=True, exist_ok=True)
+
             # Write converted message to file
-            # TODO: Files are named using a simple counter - Should change this to something more meaningful, should create a directory hierarchy 
-            outputFile = open(f"./eml_output/{i}.eml", "w")
+            outputFile = open(f"{emailPathStr}/{i}.eml", "w")
             outputFile.write(messageEmlStr)
             outputFile.close()
 
