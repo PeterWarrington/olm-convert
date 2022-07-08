@@ -199,6 +199,7 @@ def processMessage(xmlString):
     
     htmlContentRawSrcStr = htmlContentElm.text
     htmlContentEmlStr = html.unescape(htmlContentRawSrcStr) + "\n"
+    htmlContentEmlStr = lineWrapBody(htmlContentEmlStr)
 
     # Assemble EML message
     emlOutputString += dateEmlStr
@@ -244,6 +245,10 @@ def addressEncode(addressElm):
 # Generate a UUID for a MIME boundary, as required by RFC2046 https://datatracker.ietf.org/doc/html/rfc2046#section-5.1.1
 def generateBoundaryUUID():
     return "B_" + str(uuid.uuid4().hex)
+
+# Wrap lines of given body to maximum of 78 characters as recommended by RFC 2822 (https://datatracker.ietf.org/doc/html/rfc2822#section-2.1.1)
+def lineWrapBody(body):
+    return '=\n'.join(body[i:i+78] for i in range(0, len(body), 78)) # This line adapts code from https://stackoverflow.com/a/3258612 (CC BY-SA 2.5)
 
 if __name__ == "__main__":
     main()
