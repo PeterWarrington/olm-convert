@@ -8,6 +8,7 @@ import base64
 import warnings
 import html
 import os
+import uuid
 
 # Command line interface
 def main():
@@ -180,18 +181,24 @@ def processMessage(xmlString):
     threadIndexEmlValue = threadIndexElm.text
     threadIndexEmlStr = f"Thread-Index: {threadIndexEmlValue}\n"
 
-    # Set other properties
+    # Set other properties, as per MIME standard (necessary for attachments) 
     mimeVersionEmlStr = "Mime-version: 1.0\n"
-    contentTypeEmlStr = """Content-type: text/html;\n\tcharset="UTF-8"\n"""
-    contentTransferEncodingEmlStr = "Content-transfer-encoding: quoted-printable\n"
+    rootBoundaryUUID = generateBoundaryUUID()
+    contentTypeEmlStr = f"""Content-type: multipart/mixed;\n\tboundary="{rootBoundaryUUID}"\n\n\n"""
+
+    # Set HTML boundaries
+    HTMLboundaryUUID = generateBoundaryUUID()
+    multipartAlternativeContentType = f"""Content-type: multipart/alternative;\n\tboundary="{HTMLboundaryUUID}"\n\n"""
 
     # Read HTML content
+    HTMLcontentTypeEmlStr = """Content-type: text/html;\n\tcharset="UTF-8"\n"""
+    HTMLcontentTransferEncodingEmlStr = "Content-transfer-encoding: quoted-printable\n"
     htmlContentElm = root[0].find("OPFMessageCopyHTMLBody")
     if (htmlContentElm == None or htmlContentElm.text == None):
         raise ValueError("HTML content could not be found in source.")
     
     htmlContentRawSrcStr = htmlContentElm.text
-    htmlContentEmlStr = html.unescape(htmlContentRawSrcStr)
+    htmlContentEmlStr = html.unescape(htmlContentRawSrcStr) + "\n"
 
     # Assemble EML message
     emlOutputString += dateEmlStr
@@ -203,8 +210,14 @@ def processMessage(xmlString):
     emlOutputString += threadIndexEmlStr
     emlOutputString += mimeVersionEmlStr
     emlOutputString += contentTypeEmlStr
-    emlOutputString += contentTransferEncodingEmlStr
+    emlOutputString += f"--{rootBoundaryUUID}\n"
+    emlOutputString += multipartAlternativeContentType
+    emlOutputString += f"--{HTMLboundaryUUID}\n"
+    emlOutputString += HTMLcontentTypeEmlStr
+    emlOutputString += HTMLcontentTransferEncodingEmlStr
     emlOutputString += "\n" + htmlContentEmlStr
+    emlOutputString += f"\n--{HTMLboundaryUUID}--\n"
+    emlOutputString += f"\n--{rootBoundaryUUID}--\n"
 
     # Return data
     return ConvertedMessage(emlOutputString, subjectSrcStr, dateEmlValue)
@@ -227,6 +240,10 @@ def addressEncode(addressElm):
         raise ValueError("Email address not found in emailAddress element.")
 
     return f"{encodedName} <{address}>"
+
+# Generate a UUID for a MIME boundary, as required by RFC2046 https://datatracker.ietf.org/doc/html/rfc2046#section-5.1.1
+def generateBoundaryUUID():
+    return "B_" + str(uuid.uuid4().hex)
 
 if __name__ == "__main__":
     main()
