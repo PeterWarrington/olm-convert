@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import sys
 import zipfile
 import re
@@ -16,15 +17,15 @@ def main():
 
     print("OLM Convert - (https://github.com/PeterWarrington/olm-convert)")
     
-    if (len(args) != 2):
-        print("USAGE: python3 olmConvert.py <path to OLM file> <output directory>")
-    else:
+    if (len(args) == 2 or (len(args) == 3 and "--noAttachments" in args)):
         print(f"Beginning conversion of {args[0]}....")
-        convertOLM(args[0], args[1])
+        convertOLM(args[0], args[1], noAttachments=("--noAttachments" in args))
         print(f"Conversion complete! Files have been written to directory at {args[1]}.")
+    else:
+        print("USAGE: python3 olmConvert.py <path to OLM file> <output directory> [--noAttachments]")
 
 # Convert OLM file specified by olmPath, creating a directory of EML files at outputDir
-def convertOLM(olmPath, outputDir):
+def convertOLM(olmPath, outputDir, noAttachments=False):
     # OLM file is basically just a zip file, let's access it
     with zipfile.ZipFile(olmPath) as olmZip:
         fileList = olmZip.namelist()
@@ -40,7 +41,7 @@ def convertOLM(olmPath, outputDir):
 
             try:
                 # Try to convert message
-                messageEml = processMessage(messageFileStr)
+                messageEml = processMessage(messageFileStr, olmZip=olmZip, noAttachments=noAttachments)
                 messageEmlStr = messageEml.emlString
             except ValueError as e:
                 # Couldn't convert this message, skip ip
@@ -88,7 +89,7 @@ class ConvertedMessage:
         self.date = date
 
 # Reads OLM format XML message (xmlString) and returns a ConvertedMessage object containing the message converted to a EML format string
-def processMessage(xmlString):
+def processMessage(xmlString, olmZip=None, noAttachments=False):
     emlOutputString = ""
 
     # Read from file
@@ -201,6 +202,17 @@ def processMessage(xmlString):
     htmlContentEmlStr = html.unescape(htmlContentRawSrcStr) + "\n"
     htmlContentEmlStr = lineWrapBody(htmlContentEmlStr)
 
+    # Read attachments
+    attachmentStr = ""
+    if (not noAttachments and (olmZip != None)):
+        attachmentStr += "\n"
+        attachmentListElm = root[0].find("OPFMessageCopyAttachmentList")
+        if (attachmentListElm != None):
+            attachmentElms = attachmentListElm.findall("messageAttachment")
+            for attachmentElm in attachmentElms:
+                attachmentStr += f"--{rootBoundaryUUID}\n"
+                attachmentStr += processAttachment(attachmentElm, olmZip)
+
     # Assemble EML message
     emlOutputString += dateEmlStr
     emlOutputString += subjectEmlStr
@@ -218,6 +230,7 @@ def processMessage(xmlString):
     emlOutputString += HTMLcontentTransferEncodingEmlStr
     emlOutputString += "\n" + htmlContentEmlStr
     emlOutputString += f"\n--{HTMLboundaryUUID}--\n"
+    emlOutputString += attachmentStr
     emlOutputString += f"\n--{rootBoundaryUUID}--\n"
 
     # Return data
@@ -248,7 +261,67 @@ def generateBoundaryUUID():
 
 # Wrap lines of given body to maximum of 78 characters as recommended by RFC 2822 (https://datatracker.ietf.org/doc/html/rfc2822#section-2.1.1)
 def lineWrapBody(body):
-    return '=\n'.join(body[i:i+78] for i in range(0, len(body), 78)) # This line adapts code from https://stackoverflow.com/a/3258612 (CC BY-SA 2.5)
+    return '=\n'.join(body[i:i+77] for i in range(0, len(body), 77)) # This line adapts code from https://stackoverflow.com/a/3258612 (CC BY-SA 2.5)
+
+# Generates EML section (without MIME boundaries) specifying attachments.
+def processAttachment(attachmentElm, olmZip):
+    attachmentEmlStr = ""
+
+    # Read content type of attachment
+    attachmentContentTypeRaw = attachmentElm.get("OPFAttachmentContentType")
+    if (attachmentContentTypeRaw == None):
+        raise ValueError("Attachment has no content type.")
+
+    # Read file name of attachment
+    attachmentNameRaw = attachmentElm.get("OPFAttachmentName")
+    if (attachmentNameRaw == None):
+        raise ValueError("Attachment has no name.")
+
+    # Set content type header
+    attachmentContentTypeEmlStr = f"""Content-type: {attachmentContentTypeRaw}; name="{attachmentNameRaw}"\n"""
+
+    # Read content ID of attachment (used for example to reference an attached image in html)
+    attachmentContentIDraw = attachmentElm.get("OPFAttachmentContentID")
+    if (attachmentContentIDraw == None):
+        attachmentContentIDEmlStr = ""
+    else:
+        attachmentContentIDEmlStr = f"Content-ID: <{attachmentContentIDraw}>\n"
+
+    # Set content disposition header
+    attachmentContentDispositionEmlStr = f"""Content-disposition: attachment;\n\tfilename="{attachmentNameRaw}"\n"""
+
+    # Set attachment transfer encoding header
+    attachmentContentEncodingEmlStr = "Content-transfer-encoding: base64\n"
+
+    # Read attachment file from zip and encode as base64
+    attachmentFileZipPath = attachmentElm.get("OPFAttachmentURL")
+    if (attachmentFileZipPath == None):
+        raise ValueError("Attachment has no specified zip file path.")
+    
+    try:
+        attachmentFileHandle = olmZip.open(attachmentFileZipPath)
+        attachmentFileBytes = attachmentFileHandle.read()
+        attachmentFileBase64 = base64.b64encode(attachmentFileBytes).decode("utf-8", "ignore")
+
+        # Adds new line to base64 string every 76 characters as base64 strings are decoded as sets
+        # of 4 characters therefore the length of each base64 line must be a multiple of 4, and we 
+        # want this to be as close to the 78 character RFC2046 recommended  maximum line length as
+        # possible.
+        attachmentFileBase64 = '\n'.join(attachmentFileBase64[i:i+76] for i in range(0, len(attachmentFileBase64), 76)) # This line adapts code from https://stackoverflow.com/a/3258612 (CC BY-SA 2.5).
+        
+        attachmentFileHandle.close()
+    except Exception as e:
+        print(e)
+        raise ValueError("Unable to read attachment from OLM zip.")
+    
+    # Assemble attachment eml
+    attachmentEmlStr += attachmentContentTypeEmlStr
+    attachmentEmlStr += attachmentContentIDEmlStr
+    attachmentEmlStr += attachmentContentDispositionEmlStr
+    attachmentEmlStr += attachmentContentEncodingEmlStr
+    attachmentEmlStr += "\n" + attachmentFileBase64 + "\n"
+
+    return attachmentEmlStr
 
 if __name__ == "__main__":
     main()
