@@ -6,7 +6,7 @@ Output EML messages are organised hierarchically, for example a message containe
 
 Can be used as a command line interface or as a module.
 
-Supports attachments but can only output emails with HTML content type.
+Supports attachments but can only output emails with the HTML and plain text content types.
 
 ## Usage
 
