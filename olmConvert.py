@@ -186,17 +186,24 @@ def processMessage(xmlString, olmZip=None, noAttachments=False):
     rootBoundaryUUID = generateBoundaryUUID()
     contentTypeEmlStr = f"""Content-type: multipart/mixed;\n\tboundary="{rootBoundaryUUID}"\n\n\n"""
 
-    # Set HTML boundaries
-    HTMLboundaryUUID = generateBoundaryUUID()
-    multipartAlternativeContentType = f"""Content-type: multipart/alternative;\n\tboundary="{HTMLboundaryUUID}"\n\n"""
+    # Set content boundaries
+    contentBoundaryUUID = generateBoundaryUUID()
+    multipartAlternativeContentType = f"""Content-type: multipart/alternative;\n\tboundary="{contentBoundaryUUID}"\n\n"""
+
+    # Read plain text content
+    plainTextContentTypeEmlStr = """Content-type: text/plain;\n\tcharset="UTF-8"\n"""
+    plainTextContentTransferEncodingEmlStr = "Content-transfer-encoding: quoted-printable\n"
+    plainTextContentElm = root[0].find("OPFMessageCopyBody")
+    if (plainTextContentElm == None or plainTextContentElm.text == None):
+       raise ValueError("Text content could not be found in source.")
+    plainTextContentStr = lineWrapBody(plainTextContentElm.text)
 
     # Read HTML content
     HTMLcontentTypeEmlStr = """Content-type: text/html;\n\tcharset="UTF-8"\n"""
     HTMLcontentTransferEncodingEmlStr = "Content-transfer-encoding: quoted-printable\n"
     htmlContentElm = root[0].find("OPFMessageCopyHTMLBody")
     if (htmlContentElm == None or htmlContentElm.text == None):
-        raise ValueError("HTML content could not be found in source.")
-    
+        warnings.warn("HTML content could not be found in source, ignoring")
     htmlContentRawSrcStr = htmlContentElm.text
     htmlContentEmlStr = html.unescape(htmlContentRawSrcStr) + "\n"
     htmlContentEmlStr = lineWrapBody(htmlContentEmlStr)
@@ -224,11 +231,15 @@ def processMessage(xmlString, olmZip=None, noAttachments=False):
     emlOutputString += contentTypeEmlStr
     emlOutputString += f"--{rootBoundaryUUID}\n"
     emlOutputString += multipartAlternativeContentType
-    emlOutputString += f"--{HTMLboundaryUUID}\n"
+    emlOutputString += f"--{contentBoundaryUUID}\n"
+    emlOutputString += plainTextContentTypeEmlStr
+    emlOutputString += plainTextContentTransferEncodingEmlStr
+    emlOutputString += "\n" + plainTextContentStr
+    emlOutputString += f"\n--{contentBoundaryUUID}\n"
     emlOutputString += HTMLcontentTypeEmlStr
     emlOutputString += HTMLcontentTransferEncodingEmlStr
     emlOutputString += "\n" + htmlContentEmlStr
-    emlOutputString += f"\n--{HTMLboundaryUUID}--\n"
+    emlOutputString += f"\n--{contentBoundaryUUID}--\n"
     emlOutputString += attachmentStr
     emlOutputString += f"\n--{rootBoundaryUUID}--\n"
 
