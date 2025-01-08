@@ -143,7 +143,8 @@ class FakeStdout():
             out_of = int(progress_match.group(2))
             progress.set((index / out_of) * 100)
         else:
-            self.old_stdout.write(string)
+            if self.old_stdout is not None:
+                self.old_stdout.write(string)
             output_text.insert(tk.END, string)
             output_text.see(tk.END)
 
@@ -155,7 +156,8 @@ class FakeStderr():
         self.old_stderr = old_stderr
 
     def write(self, string):
-        self.old_stderr.write(string)
+        if self.old_stderr is not None:
+            self.old_stderr.write(string)
         output_text.insert(tk.END, string)
         output_text.see(tk.END)
 
