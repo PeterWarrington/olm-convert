@@ -12,6 +12,11 @@ import time
 
 # Window setup
 root = tk.Tk()
+try:
+    os.chdir(sys._MEIPASS)
+except AttributeError:
+    pass
+root.wm_iconphoto(False, tk.PhotoImage(file = 'olmConvert.png'))
 root.title("OLM Convert")
 root.resizable(False, False)
 frame = ttk.Frame(root, padding=10)
