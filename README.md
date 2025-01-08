@@ -6,7 +6,8 @@ The free, open-source OLM convertor.
 
 [Download for Mac (Apple Silicon)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Mac.Arm.zip) |
 [Download for Mac (Intel)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Mac.Intel.zip) | 
-[Download for Windows (x64)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Win.x64.zip)
+[Download for Windows (x64)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Win.x64.zip) |
+[Download Python source (Linux, or command-line)](https://github.com/PeterWarrington/olm-convert/archive/refs/tags/v1.2.0.zip)
 
 A utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients.
 
