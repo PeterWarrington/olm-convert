@@ -24,7 +24,7 @@ def main():
         print("USAGE: python3 olmConvert.py <path to OLM file> <output directory> [--noAttachments]")
 
 # Convert OLM file specified by olmPath, creating a directory of EML files at outputDir
-def convertOLM(olmPath, outputDir, noAttachments=False):
+def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False):
     # OLM file is basically just a zip file, let's access it
     with zipfile.ZipFile(olmPath) as olmZip:
         fileList = olmZip.namelist()
@@ -33,7 +33,8 @@ def convertOLM(olmPath, outputDir, noAttachments=False):
         filterToMessagesRegex = re.compile(r"message_\d{5}.xml$")
         messageFileList = list(filter(filterToMessagesRegex.search, fileList))
 
-        for messagePath in messageFileList:
+        messageListLen = len(messageFileList)
+        for messageIndex, messagePath in enumerate(messageFileList):
             # Open xml message file
             messageFile = olmZip.open(messagePath)
             messageFileStr = messageFile.read()
@@ -72,10 +73,14 @@ def convertOLM(olmPath, outputDir, noAttachments=False):
                 # Write converted message to file
                 outputFile = open(newPath, "w", encoding='utf-8')
                 outputFile.write(messageEmlStr)
+                if (verbose):
+                    sys.stdout.write(f"[{messageIndex}/{messageListLen}]: Written {fileName}\n")
                 outputFile.close()
             except Exception as e:
                 print(f"Failed to convert email with subject '{messageEml.subject}' due to error, ignoring. Error detail:")
                 print(e)
+    if (verbose):
+        print("Completed.")
 
 class ConvertedMessage:
     emlString = ""

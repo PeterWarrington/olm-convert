@@ -1,27 +1,35 @@
 # OLM Convert
 
-A python utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients.
+The free, open-source OLM convertor.
+
+![](olmConvert.png)
+
+A utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients.
 
 Output EML messages are organised hierarchically, for example a message contained in an OLM file will be output to an EML file like `"<output directory>/example@example.com/Inbox/Subject - Mon, 04 July 2022 21.04.56.eml"`.
 
-Can be used as a command line interface or as a module.
+Available as a GUI, a python command-line interface, and as a module.
 
 Supports attachments but can only output emails with the HTML and plain text content types.
 
 ## Usage
 
-Command line:
+### GUI:
+
+![Screenshot of GUI](screenshot.png)
+
+### Command line:
 ```
 python3 olmConvert.py <path to OLM file> <output directory> [--noAttachments]
 ```
 
-### Command line options
+#### Command line options
 
 * `--noAttachments` - No attachments are included in generated EML files (including embedded images), reducing file size of generated EML files.
 
 ## Module reference
 
-### convertOLM(olmPath, outputDir, noAttachments=False)
+### convertOLM(olmPath, outputDir, noAttachments=False, verbose=False)
 Convert OLM file specified by `olmPath`, creating a directory of EML files at `outputDir`. Will not include attachments if optional parameter `noAttachments` is set to True.
 
 ### processMessage(xmlString, olmZip=None, noAttachments=False)
