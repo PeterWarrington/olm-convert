@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLM Convert</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <meta name="theme-color" content="#449589" /> 
+    <meta property="og:title" content="OLM Convert" />
+    <meta name="og:description" content="The free, open-source OLM convertor. Use OLM Convert to convert an Outlook for Mac archive, that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients."/>
+    <meta property="og:url" content="https://lilpete.me/olm-convert" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://www.lilpete.me/photos/olmConvert.png" />
+    <meta property="og:image:width" content="1280"/>
+    <meta property="og:image:height" content="640"/>
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="description" content="The free, open-source OLM convertor. Use OLM Convert to convert an Outlook for Mac archive, that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients."/>
+    <link rel="canonical" href="https://lilpete.me/olm-convert" />
+</head>
+<body class="overflow-x-hidden">
+    <div class="container">
+        <div class="row h-100 align-items-center justify-content-center">
+            <div class="col-9 col-lg-4 mt-5" style="max-width: 300px">
+                <img src="https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/tags/v1.2.0/olmConvert.png" width="100px"/>
+                <h1>OLM Convert</h1>
+                <div class="mb-3">
+                    <label for="olmFile" class="form-label">Outlook for Mac Archive (.olm) file:</label>
+                    <input class="form-control" type="file" id="olmFile">
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" checked id="includeAttachments">
+                    <label class="form-check-label" for="includeAttachments">
+                      Include attachments
+                    </label>
+                  </div>                  
+                <button type="button" class="btn btn-primary" id="convertBtn" disabled>Loading...</button>      
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" id="progress-bar">0%</div>
+                </div>
+                <p class="mt-2" id="status-text"></p>
+            </div>   
+        </div>
+
+        <footer class="row align-items-center justify-content-center pb-2 mt-4">
+            <div class="col-9">
+                <p>The free, open-source OLM convertor. Use OLM Convert to convert an Outlook for Mac archive, that can only be opened with Outlook for Mac, 
+                    to a set of standard .eml files that can be opened by almost all email clients.</p>
+                <p>By Peter Warrington <a href="https://lilpete.me">lilpete.me</a> &bull; <a href="https://www.lilpete.me/olm-convert-legacy">Legacy version for desktop and command-line</a>
+                &bull; <a href="https://github.com/PeterWarrington/olm-convert">GitHub Repo</a></p>
+            </div>
+        </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="index.js"></script>
+</body>
+</html>

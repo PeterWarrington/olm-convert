@@ -1,0 +1,6 @@
+@media screen and (min-height: 650px) {
+    footer {
+        position: absolute;
+        bottom: 0;
+    }
+}
