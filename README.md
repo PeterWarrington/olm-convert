@@ -4,26 +4,27 @@ The free, open-source OLM convertor.
 
 <img src="olmConvert.png" width="100px"/>
 
-[Download for Mac (Apple Silicon)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Mac.Arm.zip) |
-[Download for Mac (Intel)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Mac.Intel.zip) | 
-[Download for Windows (x64)](https://github.com/PeterWarrington/olm-convert/releases/download/v1.2.0/OLM.Convert.1.2.0.Win.x64.zip) |
-[Download Python source (Linux, or command-line)](https://github.com/PeterWarrington/olm-convert/archive/refs/tags/v1.2.0.zip)
+[Use on the web](https://lilpete.me/olm-convert) | [Download the legacy version for desktop and command-line](https://lilpete.me/olm-convert-legacy)
 
 A utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients.
 
 Output EML messages are organised hierarchically, for example a message contained in an OLM file will be output to an EML file like `"<output directory>/example@example.com/Inbox/Subject - Mon, 04 July 2022 21.04.56.eml"`.
 
-Available as a GUI, a python command-line interface, and as a module.
+Available as a web app, Legacy GUI, a python command-line interface, and as a module.
 
 Supports attachments but can only output emails with the HTML and plain text content types.
 
 ## Usage
 
-### GUI:
+### Web:
 
-<img src="screenshot.png" width="400px" alt="Screenshot of GUI"/>
+<img src="web/screenshot.png" width="400px" alt="Screenshot of Web App"/>
 
-### Command line:
+### Legacy GUI:
+
+<img src="screenshot.png" width="400px" alt="Screenshot of Legacy GUI"/>
+
+### Legacy Command line:
 ```
 python3 olmConvert.py <path to OLM file> <output directory> [--noAttachments]
 ```
