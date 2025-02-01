@@ -76,4 +76,3 @@ async def convert():
 
                 fileCount += 1
     postMessage("progress:0%")
-    postMessage("complete")

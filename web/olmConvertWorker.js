@@ -24,15 +24,18 @@ async function convert() {
         postMessage("fileunselected");
         return;
     }
-    olmFileBytes = await olmFile.bytes();
-    await pyodide.runPythonAsync(`
-        from js import olmConvertWeb
-        olmConvertWeb.convert()
-    `);
-    console.log("Finished, now going to read file...");
-    let readFile = pyodide.FS.readFile("/outputEmls.zip");
-    console.log("Now going to post file...");
-    postMessage(readFile);
+    let fileReader = new FileReader();
+    fileReader.onload = async function() {
+        olmFileBytes = this.result;
+        await pyodide.runPythonAsync(`
+            from js import olmConvertWeb
+            olmConvertWeb.convert()
+        `);
+        let readFile = pyodide.FS.readFile("/outputEmls.zip");
+        postMessage(readFile);
+        postMessage("complete");
+    };
+    fileReader.readAsArrayBuffer(olmFile);
 }
 
 main();
