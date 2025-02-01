@@ -55,5 +55,13 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="index.js"></script>
+    <script>
+        //  ---- IFRAME HANDLING
+      if (window.location.href.includes("iframe")) {
+        document.getElementsByTagName("footer")[0].remove();
+        document.getElementsByTagName("body")[0].classList.add("in-iframe");
+      }
+      // ----
+      </script>
 </body>
 </html>
