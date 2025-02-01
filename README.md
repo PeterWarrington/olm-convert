@@ -18,7 +18,7 @@ Supports attachments but can only output emails with the HTML and plain text con
 
 ### Web:
 
-<img src="web/screenshot.png" width="400px" alt="Screenshot of Web App"/>
+<img src="web/screenshot.png" width="600px" alt="Screenshot of Web App"/>
 
 ### Legacy GUI:
 
