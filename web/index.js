@@ -19,8 +19,8 @@ worker.onmessage = (e) => {
             progressbar.style.width = percent;
             progressbar.innerText = percent;
         } else if (e.data == "fileunselected") {
-            document.getElementById("error-text").innerText = "You must select an OLM file.";
-        } else if (e.data == "ready" || e.data == "complete") {
+            document.getElementById("status-text").innerText = "You must select an OLM file.";
+        } else if (e.data == "ready" || e.data == "complete" || e.data.startsWith("error:")) {
             let cnvBtn = document.getElementById("convertBtn");
             cnvBtn.disabled = false;
             cnvBtn.innerText = "Convert!";
@@ -31,6 +31,10 @@ worker.onmessage = (e) => {
             document.getElementById("status-text").innerText = "Converting OLM contents to EML files...";
         } else if (e.data == "fileread") {
             document.getElementById("status-text").innerText = "Reading OLM file...";
+        }
+
+        if (e.data.startsWith("error:")) {
+            document.getElementById("status-text").innerText = "An error occurred: " + e.data.slice(e.data.indexOf(":") + 1);
         }
 
         if (e.data == "complete") {

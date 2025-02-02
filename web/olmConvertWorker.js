@@ -32,8 +32,12 @@ async function convert() {
             olmConvertWeb.convert()
         `);
         let readFile = pyodide.FS.readFile("/outputEmls.zip");
-        postMessage(readFile);
-        postMessage("complete");
+        if (readFile.length > 23) {
+            postMessage(readFile);
+            postMessage("complete");
+        } else {
+            postMessage("error:Unable to convert this olm file.");
+        }
     };
     fileReader.readAsArrayBuffer(olmFile);
 }
