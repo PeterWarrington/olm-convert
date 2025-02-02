@@ -1,6 +1,6 @@
 # OLM Convert
 
-The free, open-source OLM convertor.
+The free, open-source, online OLM convertor.
 
 <img src="olmConvert.png" width="100px"/>
 
