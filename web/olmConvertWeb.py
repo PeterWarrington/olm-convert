@@ -56,20 +56,21 @@ async def convert():
         sys.stderr = FakeStderr(sys.stderr)
 
         postMessage("startconvert")
-        olmConvert.convertOLM(olmFileBytes, "/output", noAttachments=(not includeAttachments), verbose=True)
+        output_dir = "/olm-convert-output"
+        olmConvert.convertOLM(olmFileBytes, output_dir, noAttachments=(not includeAttachments), verbose=True)
         postMessage("progress:100%")
 
         postMessage("createzip")
         with zipfile.ZipFile('/outputEmls.zip', 'w', zipfile.ZIP_DEFLATED) as zip:
-            out_of = sum(len(files) for _, _, files in os.walk("/output"))
+            out_of = sum(len(files) for _, _, files in os.walk(output_dir))
             fileCount = 0
-            for root, dirs, files in os.walk("/output"):
+            for root, dirs, files in os.walk(output_dir):
                 for file in files:
                     progressPercent = (fileCount / out_of) * 100
                     postMessage("progress:{:.2f}%".format(round(progressPercent, 2)))
                     zip.write(os.path.join(root, file), 
                             os.path.relpath(os.path.join(root, file), 
-                                            os.path.join("/output", '..')))
+                                            os.path.join(output_dir, '..')))
                     
                     # Remove files in temp conversion dir as we go to save RAM
                     # (file system is stored in RAM on web)
