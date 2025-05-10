@@ -6,9 +6,9 @@ The free, open-source, online OLM convertor.
 
 [Use on the web](https://lilpete.me/olm-convert) | [Download the legacy version for desktop and command-line](https://lilpete.me/olm-convert-legacy)
 
-A utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to a set of standard .eml files that can be opened by almost all email clients.
+A utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to standard .html or .eml file formats, viewable in your browser.
 
-Output EML messages are organised hierarchically, for example a message contained in an OLM file will be output to an EML file like `"<output directory>/example@example.com/Inbox/Subject - Mon, 04 July 2022 21.04.56.eml"`.
+Output files are organised hierarchically, for example a message contained in an OLM file will be output to a file like `"<output directory>/example@example.com/Inbox/Subject - Mon, 04 July 2022 21.04.56.eml"`.
 
 Available as a web app, Legacy GUI, a python command-line interface, and as a module.
 
@@ -19,6 +19,8 @@ Supports attachments but can only output emails with the HTML and plain text con
 ### Web:
 
 <img src="web/screenshot.png" width="600px" alt="Screenshot of Web App"/>
+
+<img src="https://github.com/user-attachments/assets/6af7b25f-649a-48cf-9aab-25bdd58016bc" width="600px" alt=""/>
 
 ### Legacy GUI:
 
