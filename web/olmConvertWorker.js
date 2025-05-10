@@ -3,6 +3,7 @@ importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js");
 var pyodide = null;
 var olmFile = null;
 var includeAttachments = true;
+var format = "eml";
 
 async function main() {
     pyodide = await loadPyodide();
@@ -45,7 +46,15 @@ async function convert() {
 main();
 
 onmessage = (e) => {
-    olmFile = e.data.file;
-    includeAttachments = e.data.includeAttachments;
-    convert();
+    if (typeof e.data === 'string' || e.data instanceof String) {
+        if (e.data.startsWith("getfile:")) {
+            let fileText = pyodide.FS.readFile(e.data.split(":")[1]).toBase64();
+            postMessage("fileresponse:" + fileText);
+        }
+    } else {
+        olmFile = e.data.file;
+        includeAttachments = e.data.includeAttachments;
+        format = e.data.format;
+        convert();
+    }
 }

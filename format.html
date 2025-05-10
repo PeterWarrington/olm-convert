@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$OLM_TITLE</title>
+</head>
+<body style="font-family: sans-serif;">
+    <div>
+        <b style="display: block; text-align: right;">$OLM_DATE</b>
+        <hr/>
+        <b>Subject: </b> $OLM_SUBJECT <br/>
+        <b>Date: </b> $OLM_DATE <br/>
+        <b>From: </b> $OLM_FROM_NAME &lt;$OLM_FROM_EMAIL&gt;<br/>
+        <b>To: </b> $OLM_TO_NAME &lt;$OLM_TO_EMAIL&gt;<br/>
+    </div>
+    <div style="padding-top: 10px;">
+        $OLM_BODY
+    </div>
+    <hr/>
+    <div>
+        <b>Attachments:</b> <br/>
+        <ul>
+            $OLM_ATTACHMENTS 
+        </ul>
+    </div>
+</body>
+</html>

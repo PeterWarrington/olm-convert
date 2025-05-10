@@ -26,24 +26,33 @@ Supports attachments but can only output emails with the HTML and plain text con
 
 ### Legacy Command line:
 ```
-python3 olmConvert.py <path to OLM file> <output directory> [--noAttachments]
+usage: olmConvert.py [-h] [--noAttachments] [--format {eml,html}] [--verbose] olmPath outputDir
+
+positional arguments:
+  olmPath              Path to OLM file
+  outputDir            Output directory
+
+options:
+  -h, --help           show this help message and exit
+  --noAttachments      Don't include attachments in output (decreasing file size)
+  --format {eml,html}  Specifies output format
+  --verbose            Verbose output
 ```
-
-#### Command line options
-
-* `--noAttachments` - No attachments are included in generated EML files (including embedded images), reducing file size of generated EML files.
-
 ## Module reference
 
-### convertOLM(olmPath, outputDir, noAttachments=False, verbose=False)
-Convert OLM file specified by `olmPath`, creating a directory of EML files at `outputDir`. Will not include attachments if optional parameter `noAttachments` is set to True.
+### convertOLM(olmPath, outputDir, noAttachments=False, verbose=False, format="eml")
+Convert OLM file specified by `olmPath`, creating a directory of files of type `format` at `outputDir`. Will not include attachments if optional parameter `noAttachments` is set to True.
 
-### processMessage(xmlString, olmZip=None, noAttachments=False)
-Reads OLM format XML message (`xmlString`) and returns a ConvertedMessage object containing the message converted to a EML format string. Can also return ValueError.
+`format` must be `eml` or `html`.
+
+### processMessage(xmlString, olmZip=None, noAttachments=False, format="eml")
+Reads OLM format XML message (`xmlString`) and returns a ConvertedMessage object containing the message converted to a string of the provided `format`. Can also return ValueError.
 
 `olmZip` parameter is a instance of `zipfile.ZipFile` open on the OLM file. This parameter is required in order to convert attachments.
 
 If `noAttachments` parameter is True, no attachments will be included in generated EML messages.
+
+`format` must be `eml` or `html`.
 
 ### headerEncode(value)
 Converts email header string value to RFC2047 base64 encoded UTF-8 string (<https://datatracker.ietf.org/doc/html/rfc2047>).
@@ -57,9 +66,13 @@ Generates a MIME boundary ID (<https://datatracker.ietf.org/doc/html/rfc2046#sec
 ### lineWrapBody(body)
 Wraps lines of a given HTML body to maximum of 78 characters as recommended by RFC 2822 (https://datatracker.ietf.org/doc/html/rfc2822#section-2.1.1).
 
-### processAttachment(attachmentElm, olmZip)
-Generates EML section (without MIME boundaries) specifying attachments.
+### processAttachment(attachmentElm, olmZip, format="eml")
+Generate file data for use with specified `format`.
 
 `attachmentElm` specifies the `<messageAttachment>` OLM element ([xml.etree.ElementTree.Element](https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.Element)) containing the attachment.
 
 `olmZip` parameter is a instance of `zipfile.ZipFile` open on the OLM file. Required as attachment files are contained within OLM file.
+
+`format` must be `eml` or `html`.
+
+When using `format=EML`, this does not provide message boundaries.

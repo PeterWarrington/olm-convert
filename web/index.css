@@ -1,6 +1,30 @@
-@media screen and (min-height: 700px) {
-    footer {
-        position: absolute;
-        bottom: 0;
+@media screen and (max-width: 1000px) {
+    .offcanvas {
+        width: 95% !important;
     }
+}
+
+@media screen and (min-width: 1000px) {
+    .offcanvas {
+        width: 45% !important;
+    }
+}
+
+select {
+    overflow-x: scroll;
+}
+
+/* bootstrap-select CSS overrides to turn it into just the search menu*/
+.bootstrap-select .dropdown-menu {
+    position: unset !important;
+    transform: none !important;
+    display: block !important;
+}
+
+.bootstrap-select .dropdown-toggle {
+    display: none !important;
+}
+
+.bootstrap-select .no-results {
+    background: unset !important;
 }

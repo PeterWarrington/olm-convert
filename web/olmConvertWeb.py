@@ -7,33 +7,37 @@ import zipfile
 import os
 
 async def init():
-    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/tags/v1.2.1/olmConvert.py")
+    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/heads/main/olmConvert.py")
     olm_convert_text = (await response.bytes()).decode("utf-8")
     with open("olmConvert.py", "w") as f:
         f.write(olm_convert_text)
+
+    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/heads/main/format.html")
+    format_html = (await response.bytes())
+    with open("format.html", "wb") as f:
+        f.write(format_html)
 
 async def convert():
     from js import postMessage
     from js import olmFileBytes
     from js import includeAttachments
+    from js import format
     import olmConvert
 
     try:
-        postMessage("fileread")
-        olmFileBytes = BytesIO(olmFileBytes.to_py())
-        print(type(olmFileBytes))
-        
         class FakeStdout():
             def __init__(self, old_stdout):
                 self.old_stdout = old_stdout
 
             def write(self, string):
-                progress_match = re.search(r"^\[(\d+)\/(\d+)]\:", string)
+                progress_match = re.search(r"^\[(\d+)\/(\d+)]\: Written (.*)$", string)
                 if (progress_match):
                     index = int(progress_match.group(1))
                     out_of = int(progress_match.group(2))
                     progressPercent = (index / out_of) * 100
+                    fileName =progress_match.group(3)
                     postMessage("progress:{:.2f}%".format(round(progressPercent, 2)))
+                    postMessage(f"newfile:{fileName}")
                 else:
                     if self.old_stdout is not None:
                         self.old_stdout.write(string)
@@ -55,9 +59,19 @@ async def convert():
         sys.stdout = FakeStdout(sys.stdout)
         sys.stderr = FakeStderr(sys.stderr)
 
-        postMessage("startconvert")
         output_dir = "/olm-convert-output"
-        olmConvert.convertOLM(olmFileBytes, output_dir, noAttachments=(not includeAttachments), verbose=True)
+
+        # Clear output_dir before start (in case of previous converts)
+        for root, dirs, files in os.walk(output_dir):
+            for file in files:
+                os.remove(os.path.join(root, file))
+
+        postMessage("fileread")
+        olmFileBytes = BytesIO(olmFileBytes.to_py())
+        print(type(olmFileBytes))
+
+        postMessage("startconvert")
+        olmConvert.convertOLM(olmFileBytes, output_dir, noAttachments=(not includeAttachments), verbose=True, format=format)
         postMessage("progress:100%")
 
         postMessage("createzip")
@@ -68,13 +82,14 @@ async def convert():
                 for file in files:
                     progressPercent = (fileCount / out_of) * 100
                     postMessage("progress:{:.2f}%".format(round(progressPercent, 2)))
-                    zip.write(os.path.join(root, file), 
+                    zip.write(os.path.join(root, file),
                             os.path.relpath(os.path.join(root, file), 
                                             os.path.join(output_dir, '..')))
                     
                     # Remove files in temp conversion dir as we go to save RAM
                     # (file system is stored in RAM on web)
-                    os.remove(os.path.join(root, file)) 
+                    if format == "eml":
+                        os.remove(os.path.join(root, file))
 
                     fileCount += 1
         postMessage("progress:0%")

@@ -1,4 +1,5 @@
 import sys
+import argparse
 import zipfile
 import re
 from pathlib import Path
@@ -12,19 +13,33 @@ import uuid
 
 # Command line interface
 def main():
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser(description='OLM Convert v2.0 - (https://lilpete.me/olm-convert)')
 
-    print("OLM Convert - (https://github.com/PeterWarrington/olm-convert)")
-    
-    if (len(args) == 2 or (len(args) == 3 and "--noAttachments" in args)):
-        print(f"Beginning conversion of {args[0]}....")
-        convertOLM(args[0], args[1], noAttachments=("--noAttachments" in args))
-        print(f"Conversion complete! Files have been written to directory at {args[1]}.")
-    else:
-        print("USAGE: python3 olmConvert.py <path to OLM file> <output directory> [--noAttachments]")
+    parser.add_argument('olmPath', type=argparse.FileType('rb'),
+                    help='Path to OLM file')
+    parser.add_argument('outputDir', type=Path,
+                    help='Output directory')
+
+    parser.add_argument('--noAttachments', action='store_true', default=False,
+                    help='Don\'t include attachments in output (decreasing file size)')
+
+    parser.add_argument('--format', choices=['eml', 'html'], default="eml",
+                    help='Specifies output format')
+
+    parser.add_argument('--verbose', action='store_true', default=False,
+                    help='Verbose output')
+
+    args = parser.parse_args()
+
+    print(f"Beginning conversion of {args.olmPath.name}....")
+    convertOLM(args.olmPath, args.outputDir, noAttachments=args.noAttachments, format=args.format, verbose=args.verbose)
+    print(f"Conversion complete! Files have been written to directory at {args.outputDir}.")
 
 # Convert OLM file specified by olmPath, creating a directory of EML files at outputDir
-def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False):
+def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False, format="eml"):
+    if format not in ["eml", "html"]:
+        raise ValueError(f"Unknown format '{format}', Valid formats are 'eml', 'html'.")
+
     # OLM file is basically just a zip file, let's access it
     with zipfile.ZipFile(olmPath) as olmZip:
         fileList = olmZip.namelist()
@@ -41,7 +56,7 @@ def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False):
 
             try:
                 # Try to convert message
-                messageEml = processMessage(messageFileStr, olmZip=olmZip, noAttachments=noAttachments)
+                messageEml = processMessage(messageFileStr, olmZip=olmZip, noAttachments=noAttachments, format=format)
                 messageEmlStr = messageEml.emlString
             except ValueError as e:
                 # Couldn't convert this message, skip ip
@@ -67,15 +82,15 @@ def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False):
                 fileName = f"{messageEml.subject[:200]} - {messageEml.date}".replace(":", ".").replace("/", ".").replace("\\", ".")
                 fileName = ''.join([c for c in fileName if c.isalpha() or c.isdigit() or c==' ' or c=='.']).rstrip()
                 unresolvedFilePath = f"{emailPathStr}/{fileName}"
-                newPath = os.path.abspath(unresolvedFilePath)[:250] + ".eml"
+                newPath = os.path.abspath(unresolvedFilePath)[:250] + f".{format}"
                 newPath = newPath.replace("\\\\", "/").replace("\\","/")
 
                 # Write converted message to file
                 outputFile = open(newPath, "w", encoding='utf-8')
                 outputFile.write(messageEmlStr)
-                if (verbose):
-                    sys.stdout.write(f"[{messageIndex}/{messageListLen}]: Written {fileName}\n")
                 outputFile.close()
+                if (verbose):
+                    sys.stdout.write(f"[{messageIndex}/{messageListLen}]: Written {newPath}\n")
             except Exception as e:
                 print(f"Failed to convert email with subject '{messageEml.subject}' due to error, ignoring. Error detail:")
                 print(e)
@@ -93,8 +108,19 @@ class ConvertedMessage:
         self.date = date
 
 # Reads OLM format XML message (xmlString) and returns a ConvertedMessage object containing the message converted to a EML format string
-def processMessage(xmlString, olmZip=None, noAttachments=False):
-    emlOutputString = ""
+def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
+    outputString = ""
+
+    if format == "eml":
+        outputString = ""
+    elif format in ["html"]:
+        try:
+            with open("format.html") as f:
+                outputString = f.read()
+        except:
+            raise ValueError(f"Cannot convert to {format}, format.html file not found. Try converting to eml instead.")
+    else:
+        raise ValueError(f"Unknown format '{format}', Valid formats are 'eml', 'pdf', 'html'.")
 
     # Read from file
     root = ET.fromstring(xmlString)
@@ -123,7 +149,7 @@ def processMessage(xmlString, olmZip=None, noAttachments=False):
         subjectSrcStr = ""
         subjectEmlStr = f"Subject: \n"
     else:
-        subjectSrcStr = subjectElm.text 
+        subjectSrcStr = subjectElm.text
 
         subjectEmlValue = headerEncode(subjectSrcStr)
         subjectEmlStr = f"Subject: {subjectEmlValue}\n"
@@ -215,41 +241,66 @@ def processMessage(xmlString, olmZip=None, noAttachments=False):
 
     # Read attachments
     attachmentStr = ""
+    attachmentList = []
     if (not noAttachments and (olmZip != None)):
         attachmentStr += "\n"
         attachmentListElm = root[0].find("OPFMessageCopyAttachmentList")
         if (attachmentListElm != None):
             attachmentElms = attachmentListElm.findall("messageAttachment")
             for attachmentElm in attachmentElms:
-                attachmentStr += f"--{rootBoundaryUUID}\n"
-                attachmentStr += processAttachment(attachmentElm, olmZip)
+                if format == "eml":
+                    attachmentStr += f"--{rootBoundaryUUID}\n"
+                    attachmentStr += processAttachment(attachmentElm, olmZip)
+                else:
+                    attachmentList.append(processAttachment(attachmentElm, olmZip, format=format))
 
     # Assemble EML message
-    emlOutputString += dateEmlStr
-    emlOutputString += subjectEmlStr
-    emlOutputString += senderEmlStr
-    emlOutputString += recipientEmlStr
-    emlOutputString += messageIdEmlStr
-    emlOutputString += topicEmlStr
-    emlOutputString += threadIndexEmlStr
-    emlOutputString += mimeVersionEmlStr
-    emlOutputString += contentTypeEmlStr
-    emlOutputString += f"--{rootBoundaryUUID}\n"
-    emlOutputString += multipartAlternativeContentType
-    emlOutputString += f"--{contentBoundaryUUID}\n"
-    emlOutputString += plainTextContentTypeEmlStr
-    emlOutputString += plainTextContentTransferEncodingEmlStr
-    emlOutputString += "\n" + plainTextContentStr
-    emlOutputString += f"\n--{contentBoundaryUUID}\n"
-    emlOutputString += HTMLcontentTypeEmlStr
-    emlOutputString += HTMLcontentTransferEncodingEmlStr
-    emlOutputString += "\n" + htmlContentEmlStr
-    emlOutputString += f"\n--{contentBoundaryUUID}--\n"
-    emlOutputString += attachmentStr
-    emlOutputString += f"\n--{rootBoundaryUUID}--\n"
+    if format == "eml":
+        outputString += dateEmlStr
+        outputString += subjectEmlStr
+        outputString += senderEmlStr
+        outputString += recipientEmlStr
+        outputString += messageIdEmlStr
+        outputString += topicEmlStr
+        outputString += threadIndexEmlStr
+        outputString += mimeVersionEmlStr
+        outputString += contentTypeEmlStr
+        outputString += f"--{rootBoundaryUUID}\n"
+        outputString += multipartAlternativeContentType
+        outputString += f"--{contentBoundaryUUID}\n"
+        outputString += plainTextContentTypeEmlStr
+        outputString += plainTextContentTransferEncodingEmlStr
+        outputString += "\n" + plainTextContentStr
+        outputString += f"\n--{contentBoundaryUUID}\n"
+        outputString += HTMLcontentTypeEmlStr
+        outputString += HTMLcontentTransferEncodingEmlStr
+        outputString += "\n" + htmlContentEmlStr
+        outputString += f"\n--{contentBoundaryUUID}--\n"
+        outputString += attachmentStr
+        outputString += f"\n--{rootBoundaryUUID}--\n"
+    elif format in ["html", "pdf"]:
+        outputString = (outputString.replace("$OLM_TITLE", f"{subjectSrcStr} - {sourceDateStr}")
+            .replace("$OLM_SUBJECT", subjectSrcStr)
+            .replace("$OLM_DATE", dateEmlValue)
+            .replace("$OLM_FROM_NAME", senderDetailElm.get("OPFContactEmailAddressName"))
+            .replace("$OLM_FROM_EMAIL", senderDetailElm.get("OPFContactEmailAddressAddress"))
+            .replace("$OLM_TO_NAME", recipientDetailElm.get("OPFContactEmailAddressName"))
+            .replace("$OLM_TO_EMAIL", recipientDetailElm.get("OPFContactEmailAddressAddress"))
+            .replace("$OLM_BODY", htmlContentRawSrcStr))
+
+        attachmentsHtmlStr = ""
+        if len(attachmentList) > 0:
+            for filename, cid, file_url in attachmentList:
+                attachmentsHtmlStr += f'<li><a href="{file_url}">{filename}</a></li>'
+                outputString = outputString.replace(f"cid:{cid}", file_url)
+        else:
+            attachmentsHtmlStr = "None"
+
+        outputString = outputString.replace("$OLM_ATTACHMENTS", attachmentsHtmlStr)
+
 
     # Return data
-    return ConvertedMessage(emlOutputString, subjectSrcStr, dateEmlValue)
+    return ConvertedMessage(outputString, subjectSrcStr, dateEmlValue)
 
 # Convert email header value to RFC2047 base64 encoded UTF-8 string (https://datatracker.ietf.org/doc/html/rfc2047)
 def headerEncode(value):
@@ -279,9 +330,7 @@ def lineWrapBody(body):
     return '=\n'.join(body[i:i+77] for i in range(0, len(body), 77)) # This line adapts code from https://stackoverflow.com/a/3258612 (CC BY-SA 2.5)
 
 # Generates EML section (without MIME boundaries) specifying attachments.
-def processAttachment(attachmentElm, olmZip):
-    attachmentEmlStr = ""
-
+def processAttachment(attachmentElm, olmZip, format="eml"):
     # Read content type of attachment
     attachmentContentTypeRaw = attachmentElm.get("OPFAttachmentContentType")
     if (attachmentContentTypeRaw == None):
@@ -330,13 +379,17 @@ def processAttachment(attachmentElm, olmZip):
         raise ValueError("Unable to read attachment from OLM zip.")
     
     # Assemble attachment eml
-    attachmentEmlStr += attachmentContentTypeEmlStr
-    attachmentEmlStr += attachmentContentIDEmlStr
-    attachmentEmlStr += attachmentContentDispositionEmlStr
-    attachmentEmlStr += attachmentContentEncodingEmlStr
-    attachmentEmlStr += "\n" + attachmentFileBase64 + "\n"
+    if format == "eml":
+        attachmentResult = ""
+        attachmentResult += attachmentContentTypeEmlStr
+        attachmentResult += attachmentContentIDEmlStr
+        attachmentResult += attachmentContentDispositionEmlStr
+        attachmentResult += attachmentContentEncodingEmlStr
+        attachmentResult += "\n" + attachmentFileBase64 + "\n"
+    else:
+        attachmentResult = (attachmentNameRaw, attachmentContentIDraw, f"data:{attachmentContentTypeRaw};base64,{attachmentFileBase64}")
 
-    return attachmentEmlStr
+    return attachmentResult
 
 if __name__ == "__main__":
     main()
