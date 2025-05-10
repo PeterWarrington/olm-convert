@@ -42,8 +42,8 @@ function previewDownload() {
 function newFileHandler(filename) {
     if (getFormat() == "html") {
         $("#output-files").append(`<option value="${filename}">${filename.split("/").at(-1)}</option>`);
-        $("#output-files").selectpicker('destroy');
-        $("#output-files").selectpicker();
+        $("#output-files").selectpicker('refresh');
+        $("#output-files").empty();
         document.getElementsByClassName("dropdown-toggle")[0].click();
     }
 }
@@ -56,10 +56,7 @@ worker.onmessage = (e) => {
     if (typeof e.data === 'string' || e.data instanceof String) {
         if (e.data.startsWith("progress:")) {
             if (!started) {
-                if (getFormat() == "html") {
-                    document.getElementById("preview-btn").classList.remove("d-none");
-                    (new bootstrap.Offcanvas('#preview-offcanvas')).show();
-                } else {
+                if (getFormat() == "html") {} else {
                     document.getElementById("preview-btn").classList.add("d-none");
                 }
                 started = true;
@@ -116,6 +113,9 @@ worker.onmessage = (e) => {
         let blob = new Blob([e.data], {
             type: "application/zip"
         });
+
+        document.getElementById("preview-btn").classList.remove("d-none");
+        (new bootstrap.Offcanvas('#preview-offcanvas')).show();
     
         let url = window.URL.createObjectURL(blob);
 
