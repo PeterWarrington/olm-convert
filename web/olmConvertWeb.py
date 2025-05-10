@@ -28,7 +28,7 @@ async def convert():
                 self.old_stdout = old_stdout
 
             def write(self, string):
-                progress_match = re.search("^\\[(\\d+)\\/(\\d+)]\\:", string)
+                progress_match = re.search(r"^\[(\d+)\/(\d+)]\:", string)
                 if (progress_match):
                     index = int(progress_match.group(1))
                     out_of = int(progress_match.group(2))
