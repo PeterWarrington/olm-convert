@@ -279,13 +279,25 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
         outputString += attachmentStr
         outputString += f"\n--{rootBoundaryUUID}--\n"
     elif format in ["html", "pdf"]:
+        fromName = "Unknown"
+        fromEmail = ""
+        if senderDetailElm is not None:
+            fromName = senderDetailElm.get("OPFContactEmailAddressName")
+            fromEmail = senderDetailElm.get("OPFContactEmailAddressAddress")
+
+        toName = "Unknown"
+        toEmail = ""
+        if recipientDetailElm is not None:
+            toName = recipientDetailElm.get("OPFContactEmailAddressName")
+            toEmail = recipientDetailElm.get("OPFContactEmailAddressAddress")
+
         outputString = (outputString.replace("$OLM_TITLE", f"{subjectSrcStr} - {sourceDateStr}")
             .replace("$OLM_SUBJECT", subjectSrcStr)
             .replace("$OLM_DATE", dateEmlValue)
-            .replace("$OLM_FROM_NAME", senderDetailElm.get("OPFContactEmailAddressName"))
-            .replace("$OLM_FROM_EMAIL", senderDetailElm.get("OPFContactEmailAddressAddress"))
-            .replace("$OLM_TO_NAME", recipientDetailElm.get("OPFContactEmailAddressName"))
-            .replace("$OLM_TO_EMAIL", recipientDetailElm.get("OPFContactEmailAddressAddress"))
+            .replace("$OLM_FROM_NAME", fromName)
+            .replace("$OLM_FROM_EMAIL", fromEmail)
+            .replace("$OLM_TO_NAME", toName)
+            .replace("$OLM_TO_EMAIL", toEmail)
             .replace("$OLM_BODY", htmlContentRawSrcStr))
 
         attachmentsHtmlStr = ""
