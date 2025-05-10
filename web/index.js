@@ -11,6 +11,12 @@ document.getElementById("convertBtn").onclick = (e) => {
     });
 };
 
+document.getElementById('changelog-btn').addEventListener('click', () =>
+    bootstrap.Toast.getOrCreateInstance(
+        document.getElementById('changelog-toast')
+    ).show()
+);
+
 worker.onmessage = (e) => {
     if (typeof e.data === 'string' || e.data instanceof String) {
         if (e.data.startsWith("progress:")) {
