@@ -1,6 +1,8 @@
 const worker = new Worker("olmConvertWorker.js");
 let started = false;
 
+let optionStr = "";
+
 document.getElementById("convertBtn").disabled = true;
 document.getElementById("convertBtn").onclick = (e) => {
     outputList = [];
@@ -41,10 +43,7 @@ function previewDownload() {
 
 function newFileHandler(filename) {
     if (getFormat() == "html") {
-        $("#output-files").append(`<option value="${filename}">${filename.split("/").at(-1)}</option>`);
-        $("#output-files").selectpicker('refresh');
-        $("#output-files").empty();
-        document.getElementsByClassName("dropdown-toggle")[0].click();
+        optionStr += `<option value="${filename}">${filename.split("/").at(-1)}</option>`;
     }
 }
 
@@ -86,8 +85,14 @@ worker.onmessage = (e) => {
         } else if (e.data == "fileunselected") {
             document.getElementById("status-text").innerText = "You must select an OLM file.";
         } else if (e.data == "createzip") {
+            $("#output-files").append(optionStr);
+            $("#output-files").selectpicker('refresh');
+            $("#output-files").empty();
+            document.getElementsByClassName("dropdown-toggle")[0].click();
+
             document.getElementById("preview-btn").classList.remove("d-none");
             (new bootstrap.Offcanvas('#preview-offcanvas')).show();
+
             document.getElementById("status-text").innerText = "Creating zip file...";
             document.getElementById("progress-bar").classList.add("bg-success");
         } else if (e.data == "startconvert") {
