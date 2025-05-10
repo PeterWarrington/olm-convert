@@ -7,7 +7,7 @@ import zipfile
 import os
 
 async def init():
-    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/f2d19fee8f8fb9e673484003303fd8c13eee300d/olmConvert.py")
+    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/df4cc9081a7df7184eb49b4a342b1290ef41ec04/olmConvert.py")
     olm_convert_text = (await response.bytes()).decode("utf-8")
     with open("olmConvert.py", "w") as f:
         f.write(olm_convert_text)
