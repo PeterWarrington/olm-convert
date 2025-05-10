@@ -111,11 +111,11 @@ def processMessage(xmlString, olmZip=None, noAttachments=False):
     sourceDateStr = sourceDateElm.text
     try:
         srcDate = datetime.strptime(sourceDateStr, "%Y-%m-%dT%X")
-        dateEmlValue = srcDate.strftime("%a, %m %B %Y %X %z")
+        dateEmlValue = srcDate.strftime("%a, %d %b %Y %H:%M:%S +0000")
         dateEmlStr = f"Date: {dateEmlValue}\n"
     except ValueError:
         raise ValueError("Unexpected sent time format in source.")
-    
+
     # Read subject of email
     subjectElm = root[0].find("OPFMessageCopySubject")
     if (subjectElm == None):
@@ -182,7 +182,7 @@ def processMessage(xmlString, olmZip=None, noAttachments=False):
     threadIndexElm = root[0].find("OPFMessageCopyThreadIndex")
     if (threadIndexElm == None):
         raise ValueError("Thread index could not be found in source.")
-    
+
     threadIndexEmlValue = threadIndexElm.text
     threadIndexEmlStr = f"Thread-Index: {threadIndexEmlValue}\n"
 
