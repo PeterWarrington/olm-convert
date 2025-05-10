@@ -13,18 +13,3 @@
 select {
     overflow-x: scroll;
 }
-
-/* bootstrap-select CSS overrides to turn it into just the search menu*/
-.bootstrap-select .dropdown-menu {
-    position: unset !important;
-    transform: none !important;
-    display: block !important;
-}
-
-.bootstrap-select .dropdown-toggle {
-    display: none !important;
-}
-
-.bootstrap-select .no-results {
-    background: unset !important;
-}

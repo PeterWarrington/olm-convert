@@ -1,7 +1,8 @@
 const worker = new Worker("olmConvertWorker.js");
+const textEncoder = new TextEncoder();
 let started = false;
 
-let optionStr = "";
+let filenameList = [];
 
 document.getElementById("convertBtn").disabled = true;
 document.getElementById("convertBtn").onclick = (e) => {
@@ -37,13 +38,9 @@ function getFormat() {
         return document.getElementById("eml-option").value
 }
 
-function previewDownload() {
-    document.getElementById("file-preview").src;
-}
-
 function newFileHandler(filename) {
     if (getFormat() == "html") {
-        optionStr += `<option value="${filename}">${filename.split("/").at(-1)}</option>`;
+        filenameList.push(filename);
     }
 }
 
@@ -51,7 +48,29 @@ function getFile(filename) {
     worker.postMessage(`getfile:${filename}`);
 }
 
-worker.onmessage = (e) => {
+function fileFilter(value) {
+    document.getElementById("output-files").innerHTML = "";
+    let filterList = filenameList.filter(str => value.split(" ").every(
+        keyword => str.toLowerCase().includes(keyword.toLowerCase())
+    )).slice(0,200);
+
+    filterList.forEach(filename => {
+        let option = document.createElement("option");
+        option.text = filename.split("/").at(-1);
+        option.value = filename;
+        document.getElementById("output-files").add(option);
+    });
+
+    if (filterList.length >= 200) {
+        let option = document.createElement("option");
+        option.text = "Filter to see more...";
+        option.value = "NONE";
+        document.getElementById("output-files").add(option);
+    }
+
+}
+
+worker.onmessage = async (e) => {
     if (typeof e.data === 'string' || e.data instanceof String) {
         if (e.data.startsWith("progress:")) {
             if (!started) {
@@ -68,7 +87,7 @@ worker.onmessage = (e) => {
             let filename = e.data.slice(e.data.indexOf(":") + 1);
             newFileHandler(filename);
         } else if (e.data.startsWith("fileresponse:")) {
-            let html = new TextDecoder().decode(Uint8Array.fromBase64(e.data.slice(e.data.indexOf(":") + 1)));
+            let html = e.data.slice(e.data.indexOf(":") + 1);
             let iframe = document.getElementById("file-preview");
             iframe.src = `about:blank`;
             iframe.contentWindow.document.open();
@@ -76,27 +95,22 @@ worker.onmessage = (e) => {
             iframe.contentWindow.document.close();
 
             let download_btn = document.getElementById("preview-download");
-            download_btn.href = `data:text/html,<!DOCTYPE HTML>
+            download_btn.href = "data:text/html;base64," + await bufferToBase64(textEncoder.encode(`<!DOCTYPE HTML>
                                 <html>
-                                <head>${iframe.contentWindow.document.head.innerHTML}</head>
+                                <head>
+                                ${iframe.contentWindow.document.head.innerHTML}
+                                <style>body {font-family: sans-serif}</style>
+                                </head>
                                 <body>${iframe.contentWindow.document.body.innerHTML}</body>
-                                <html>`;
+                                <html>`));
             download_btn.download = document.getElementById("output-files").value.split("/").at(-1);
         } else if (e.data == "fileunselected") {
             document.getElementById("status-text").innerText = "You must select an OLM file.";
         } else if (e.data == "createzip") {
-            $("#output-files").append(optionStr);
-            $("#output-files").selectpicker('refresh');
-            $("#output-files").empty();
-            document.getElementsByClassName("dropdown-toggle")[0].click();
-
-            document.getElementById("preview-btn").classList.remove("d-none");
-            (new bootstrap.Offcanvas('#preview-offcanvas')).show();
-
             document.getElementById("status-text").innerText = "Creating zip file...";
             document.getElementById("progress-bar").classList.add("bg-success");
         } else if (e.data == "startconvert") {
-            document.getElementById("status-text").innerText = "Converting OLM contents to EML files...";
+            document.getElementById("status-text").innerText = "Converting OLM contents...";
         } else if (e.data == "fileread") {
             document.getElementById("status-text").innerText = "Reading OLM file...";
         }
@@ -112,6 +126,19 @@ worker.onmessage = (e) => {
         }
 
         if (e.data == "complete") {
+            fileFilter("");
+
+            document.getElementById("preview-btn").classList.remove("d-none");
+            (new bootstrap.Offcanvas('#preview-offcanvas')).show();
+
+            document.getElementById("output-files").addEventListener("change", (event) => {
+                getFile(event.target.value);
+            });
+
+            let outputSearchChange = () => fileFilter(document.getElementById("output-search").value);
+            document.getElementById("output-search").onchange = outputSearchChange;
+            document.getElementById("output-search").onkeydown = outputSearchChange;
+
             document.getElementById("progress-bar").classList.remove("bg-success");
             document.getElementById("status-text").innerText = "Complete!";
             started = false;
@@ -128,4 +155,16 @@ worker.onmessage = (e) => {
         download_btn.download = "emlOutput.zip";
         download_btn.classList.remove("d-none");
     }
+}
+
+// https://stackoverflow.com/a/66046176/5270231
+async function bufferToBase64(buffer) {
+    // use a FileReader to generate a base64 data URI:
+    const base64url = await new Promise(r => {
+        const reader = new FileReader()
+        reader.onload = () => r(reader.result)
+        reader.readAsDataURL(new Blob([buffer]))
+    });
+    // remove the `data:...;base64,` part from the start
+    return base64url.slice(base64url.indexOf(',') + 1);
 }

@@ -28,17 +28,18 @@ async function convert() {
     let fileReader = new FileReader();
     fileReader.onload = async function() {
         olmFileBytes = this.result;
-        await pyodide.runPythonAsync(`
+        pyodide.runPythonAsync(`
             from js import olmConvertWeb
             olmConvertWeb.convert()
-        `);
-        let readFile = pyodide.FS.readFile("/outputEmls.zip");
-        if (readFile.length > 23) {
-            postMessage(readFile);
-            postMessage("complete");
-        } else {
-            postMessage("error:Unable to convert this olm file.");
-        }
+        `).then(() => {
+            let readFile = pyodide.FS.readFile("/outputEmls.zip");
+            if (readFile.length > 23) {
+                postMessage(readFile);
+                postMessage("complete");
+            } else {
+                postMessage("error:Unable to convert this olm file.");
+            }
+        });
     };
     fileReader.readAsArrayBuffer(olmFile);
 }
@@ -48,7 +49,8 @@ main();
 onmessage = (e) => {
     if (typeof e.data === 'string' || e.data instanceof String) {
         if (e.data.startsWith("getfile:")) {
-            let fileText = pyodide.FS.readFile(e.data.split(":")[1]).toBase64();
+            let decoder = new TextDecoder('utf8');
+            let fileText = decoder.decode(pyodide.FS.readFile(e.data.split(":")[1]));
             postMessage("fileresponse:" + fileText);
         }
     } else {
