@@ -86,6 +86,8 @@ worker.onmessage = (e) => {
         } else if (e.data == "fileunselected") {
             document.getElementById("status-text").innerText = "You must select an OLM file.";
         } else if (e.data == "createzip") {
+            document.getElementById("preview-btn").classList.remove("d-none");
+            (new bootstrap.Offcanvas('#preview-offcanvas')).show();
             document.getElementById("status-text").innerText = "Creating zip file...";
             document.getElementById("progress-bar").classList.add("bg-success");
         } else if (e.data == "startconvert") {
@@ -114,9 +116,6 @@ worker.onmessage = (e) => {
             type: "application/zip"
         });
 
-        document.getElementById("preview-btn").classList.remove("d-none");
-        (new bootstrap.Offcanvas('#preview-offcanvas')).show();
-    
         let url = window.URL.createObjectURL(blob);
 
         let download_btn = document.getElementById("download-btn");
