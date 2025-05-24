@@ -31,6 +31,10 @@ document.getElementById('changelog-btn').addEventListener('click', () =>
     ).show()
 );
 
+document.getElementById("preview-print").addEventListener("click", () => {
+    document.getElementById("file-preview").contentWindow.print();
+});
+
 function getFormat() {
     if (document.getElementById("html-option").checked)
         return document.getElementById("html-option").value
@@ -44,8 +48,8 @@ function newFileHandler(filename) {
     }
 }
 
-function getFile(filename) {
-    worker.postMessage(`getfile:${filename}`);
+function getFileInZip(filename) {
+    worker.postMessage(`getfileinzip:${filename}`);
 }
 
 function fileFilter(value) {
@@ -126,18 +130,20 @@ worker.onmessage = async (e) => {
         }
 
         if (e.data == "complete") {
-            fileFilter("");
+            if (getFormat() == "html") {
+                fileFilter("");
 
-            document.getElementById("preview-btn").classList.remove("d-none");
-            (new bootstrap.Offcanvas('#preview-offcanvas')).show();
+                document.getElementById("preview-btn").classList.remove("d-none");
+                (new bootstrap.Offcanvas('#preview-offcanvas')).show();
 
-            document.getElementById("output-files").addEventListener("change", (event) => {
-                getFile(event.target.value);
-            });
+                document.getElementById("output-files").addEventListener("change", (event) => {
+                    getFileInZip(event.target.value);
+                });
 
-            let outputSearchChange = () => fileFilter(document.getElementById("output-search").value);
-            document.getElementById("output-search").onchange = outputSearchChange;
-            document.getElementById("output-search").onkeydown = outputSearchChange;
+                let outputSearchChange = () => fileFilter(document.getElementById("output-search").value);
+                document.getElementById("output-search").onchange = outputSearchChange;
+                document.getElementById("output-search").onkeydown = outputSearchChange;
+            }
 
             document.getElementById("progress-bar").classList.remove("bg-success");
             document.getElementById("status-text").innerText = "Complete!";

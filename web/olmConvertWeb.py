@@ -30,12 +30,12 @@ async def convert():
                 self.old_stdout = old_stdout
 
             def write(self, string):
-                progress_match = re.search(r"^\[(\d+)\/(\d+)]\: Written (.*)$", string)
+                progress_match = re.search(r"^\[(\d+)\/(\d+)]\: Written /(.*)$", string)
                 if (progress_match):
                     index = int(progress_match.group(1))
                     out_of = int(progress_match.group(2))
                     progressPercent = (index / out_of) * 100
-                    fileName =progress_match.group(3)
+                    fileName = progress_match.group(3)
                     postMessage("progress:{:.2f}%".format(round(progressPercent, 2)))
                     postMessage(f"newfile:{fileName}")
                 else:
@@ -88,8 +88,7 @@ async def convert():
                     
                     # Remove files in temp conversion dir as we go to save RAM
                     # (file system is stored in RAM on web)
-                    if format == "eml":
-                        os.remove(os.path.join(root, file))
+                    os.remove(os.path.join(root, file))
 
                     fileCount += 1
         postMessage("progress:0%")

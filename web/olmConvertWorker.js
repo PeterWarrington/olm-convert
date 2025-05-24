@@ -10,7 +10,7 @@ async function main() {
     // Pyodide is now ready to use...
     await pyodide.runPythonAsync(`
         from pyodide.http import pyfetch
-        response = await pyfetch("olmConvertWeb.py?v=2.0")
+        response = await pyfetch("olmConvertWeb.py?v=2.1")
         with open("olmConvertWeb.py", "wb") as f:
             f.write(await response.bytes())
     `);
@@ -48,7 +48,14 @@ main();
 
 onmessage = (e) => {
     if (typeof e.data === 'string' || e.data instanceof String) {
-        if (e.data.startsWith("getfile:")) {
+        if (e.data.startsWith("getfileinzip:") || e.data.startsWith("getfile:")) {
+            if (e.data.startsWith("getfileinzip:")) {
+                pyodide.runPython(`
+                import zipfile
+                archive = zipfile.ZipFile('/outputEmls.zip', 'r')
+                archive.extract('${e.data.split(":")[1]}')
+                `);
+            }
             let decoder = new TextDecoder('utf8');
             let fileText = decoder.decode(pyodide.FS.readFile(e.data.split(":")[1]));
             postMessage("fileresponse:" + fileText);
