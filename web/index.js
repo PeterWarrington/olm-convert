@@ -4,6 +4,9 @@ let started = false;
 
 let filenameList = [];
 
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
 document.getElementById("convertBtn").disabled = true;
 document.getElementById("convertBtn").onclick = (e) => {
     outputList = [];

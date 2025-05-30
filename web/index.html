@@ -47,7 +47,12 @@
                         </div>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="format-options" id="eml-option" value="eml">
-                            <label class="form-check-label" for="eml-option">EML</label>
+                            <label class="form-check-label" for="eml-option"
+                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                data-bs-custom-class="tooltip-warning"
+                                data-bs-title="EML file format output can be downloaded, but cannot be previewed in browser. Use HTML format to view previews in browser.">
+                                    EML
+                            </label>
                         </div>
                     </div>
                     <button type="button" class="btn btn-primary" id="convertBtn" disabled>Loading...</button>

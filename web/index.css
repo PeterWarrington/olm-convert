@@ -13,3 +13,9 @@
 select {
     overflow-x: scroll;
 }
+
+.tooltip-warning {
+    --bs-tooltip-bg: var(--bs-warning-bg-subtle) !important;
+    --bs-tooltip-color: var(--bs-white) !important;
+    --bs-tooltip-opacity: 100% !important;
+}
