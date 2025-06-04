@@ -27,7 +27,7 @@ frame.grid()
 
 # Information UI setup
 
-ttk.Label(frame, text="OLM Convert v2.0", font=font.Font(weight="bold")).grid(column=0, row=0, columnspan=3)
+ttk.Label(frame, text="OLM Convert v2.1", font=font.Font(weight="bold")).grid(column=0, row=0, columnspan=3)
 ttk.Label(frame, text="By Peter Warrington").grid(column=0, row=1, columnspan=3)
 
 web_link = "https://www.lilpete.me/olm-convert"
