@@ -3,6 +3,7 @@ importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js");
 var pyodide = null;
 var olmFile = null;
 var includeAttachments = true;
+var timestamps = false;
 var format = "eml";
 
 async function main() {
@@ -15,6 +16,7 @@ async function main() {
             f.write(await response.bytes())
     `);
     olmConvertWeb = pyodide.pyimport("olmConvertWeb");
+    await pyodide.loadPackage("python-dateutil")
     await olmConvertWeb.init();
 
     postMessage("ready");

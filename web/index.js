@@ -24,6 +24,7 @@ document.getElementById("convertBtn").onclick = (e) => {
     worker.postMessage({
         file: document.getElementById("olmFile").files[0],
         includeAttachments: document.getElementById("includeAttachments").checked,
+        timestamps: document.getElementById("timestamps").checked,
         format: getFormat()
     });
 };

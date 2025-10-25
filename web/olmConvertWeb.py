@@ -7,7 +7,7 @@ import zipfile
 import os
 
 async def init():
-    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/df4cc9081a7df7184eb49b4a342b1290ef41ec04/olmConvert.py")
+    response = await pyfetch("https://raw.githubusercontent.com/beroset/olm-convert/refs/heads/add-timestamping/olmConvert.py")
     olm_convert_text = (await response.bytes()).decode("utf-8")
     with open("olmConvert.py", "w") as f:
         f.write(olm_convert_text)
@@ -21,6 +21,7 @@ async def convert():
     from js import postMessage
     from js import olmFileBytes
     from js import includeAttachments
+    from js import timestamps
     from js import format
     import olmConvert
 
@@ -71,7 +72,7 @@ async def convert():
         print(type(olmFileBytes))
 
         postMessage("startconvert")
-        olmConvert.convertOLM(olmFileBytes, output_dir, noAttachments=(not includeAttachments), verbose=True, format=format)
+        olmConvert.convertOLM(olmFileBytes, output_dir, noAttachments=(not includeAttachments), timestamps=timestamps, verbose=True, format=format)
         postMessage("progress:100%")
 
         postMessage("createzip")
