@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from dateutil import parser
 import base64
 import warnings
 import html
@@ -23,6 +24,9 @@ def main():
     parser.add_argument('--noAttachments', action='store_true', default=False,
                     help='Don\'t include attachments in output (decreasing file size)')
 
+    parser.add_argument('--timestamps', action='store_true', default=False,
+                    help='Set timestamp of each file to sent date')
+
     parser.add_argument('--format', choices=['eml', 'html'], default="eml",
                     help='Specifies output format')
 
@@ -32,11 +36,11 @@ def main():
     args = parser.parse_args()
 
     print(f"Beginning conversion of {args.olmPath.name}....")
-    convertOLM(args.olmPath, args.outputDir, noAttachments=args.noAttachments, format=args.format, verbose=args.verbose)
+    convertOLM(args.olmPath, args.outputDir, noAttachments=args.noAttachments, timestamps=args.timestamps, format=args.format, verbose=args.verbose)
     print(f"Conversion complete! Files have been written to directory at {args.outputDir}.")
 
 # Convert OLM file specified by olmPath, creating a directory of EML files at outputDir
-def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False, format="eml"):
+def convertOLM(olmPath, outputDir, noAttachments=False, timestamps=False, verbose=False, format="eml"):
     if format not in ["eml", "html"]:
         raise ValueError(f"Unknown format '{format}', Valid formats are 'eml', 'html'.")
 
@@ -89,6 +93,9 @@ def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False, format="e
                 outputFile = open(newPath, "w", encoding='utf-8')
                 outputFile.write(messageEmlStr)
                 outputFile.close()
+                if (timestamps):
+                    ts = parser.parse(messageEml.date).timestamp()
+                    os.utime(newPath, times=(ts,ts))
                 if (verbose):
                     sys.stdout.write(f"[{messageIndex}/{messageListLen}]: Written {newPath}\n")
             except Exception as e:

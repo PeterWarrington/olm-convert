@@ -72,21 +72,27 @@ attachments_var = tk.BooleanVar(value = True)
 attachments_checkbox = ttk.Checkbutton(frame, text="Include attachments", variable=attachments_var)
 attachments_checkbox.grid(column=1, row=5, sticky="E", padx=5)
 
+# Timestamps checkbox
+
+timestamps_var = tk.BooleanVar(value = True)
+timestamps_checkbox = ttk.Checkbutton(frame, text="Timestamp files", variable=timestamps_var)
+timestamps_checkbox.grid(column=1, row=6, sticky="E", padx=5)
+
 # Output format radio
 
-ttk.Label(frame, text="Output file format:").grid(column=0, row=6, sticky="E")
+ttk.Label(frame, text="Output file format:").grid(column=0, row=7, sticky="E")
 format_var = tk.StringVar(value = "eml")
 eml_radio = ttk.Radiobutton(frame, text="EML", variable=format_var, value="eml")
-eml_radio.grid(column=1, row=6, sticky="W", padx=5)
+eml_radio.grid(column=1, row=7, sticky="W", padx=5)
 html_radio = ttk.Radiobutton(frame, text="HTML", variable=format_var, value="html")
-html_radio.grid(column=1, row=7, sticky="W", padx=5)
+html_radio.grid(column=1, row=8, sticky="W", padx=5)
 
 # Convert button
 
 def run_convert():
     def convert_wrapper():
         try:
-            olmConvert.convertOLM(olm_path_entry.get(), output_path_entry.get(), not attachments_var.get(), True, format=format_var.get())
+            olmConvert.convertOLM(olm_path_entry.get(), output_path_entry.get(), not attachments_var.get(), timestamps_var.get(), verbose=True, format=format_var.get())
             messagebox.showinfo("Conversion complete", "The conversion has finished successfully.")
             try:
                 if platform.system() == "Darwin":
@@ -115,13 +121,13 @@ def run_convert():
         convert_thread.start()
 
 convert_btn = ttk.Button(frame, text="Convert!", command=run_convert)
-convert_btn.grid(column=2, row=7)
+convert_btn.grid(column=2, row=8)
 
 # Progress bar
 
 progress = tk.DoubleVar()
 progressbar = ttk.Progressbar(frame, variable=progress, length=500)
-progressbar.grid(column=0, row=8, columnspan=3)
+progressbar.grid(column=0, row=9, columnspan=3)
 
 # Output entry
 
@@ -131,14 +137,14 @@ def toggle_output():
     if (not output_shown_flag.get()):
         output_shown_flag.set(True)
         output_label.config(text="▼ Output (advanced):")
-        output_text.grid(column=0, row=10, columnspan=3)
+        output_text.grid(column=0, row=11, columnspan=3)
     else:
         output_shown_flag.set(False)
         output_label.config(text="▶ Show output (advanced):")
         output_text.grid_forget()
 
 output_label = ttk.Label(frame, text="▶ Show output (advanced):")
-output_label.grid(column=0, row=9, sticky="W", columnspan=3)
+output_label.grid(column=0, row=10, sticky="W", columnspan=3)
 output_label.bind("<Button-1>", lambda e: toggle_output())
 output_text = tk.Text(frame, width=70, height=20)
 
