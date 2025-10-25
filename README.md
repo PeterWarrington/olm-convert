@@ -28,7 +28,7 @@ Supports attachments but can only output emails with the HTML and plain text con
 
 ### Legacy Command line:
 ```
-usage: olmConvert.py [-h] [--noAttachments] [--format {eml,html}] [--verbose] olmPath outputDir
+usage: olmConvert.py [-h] [--noAttachments] [--timestamps] [--format {eml,html}] [--verbose] olmPath outputDir
 
 positional arguments:
   olmPath              Path to OLM file
@@ -37,6 +37,7 @@ positional arguments:
 options:
   -h, --help           show this help message and exit
   --noAttachments      Don't include attachments in output (decreasing file size)
+  --timestamps         Adjust each file's timestamp to corresponding send time
   --format {eml,html}  Specifies output format
   --verbose            Verbose output
 ```
