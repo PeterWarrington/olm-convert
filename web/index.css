@@ -19,3 +19,8 @@ select {
     --bs-tooltip-color: var(--bs-white) !important;
     --bs-tooltip-opacity: 100% !important;
 }
+
+#changelog-toast .toast-body {
+    max-height: 50vh;
+    overflow-y: auto;
+}
