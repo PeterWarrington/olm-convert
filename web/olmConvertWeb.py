@@ -7,12 +7,20 @@ import zipfile
 import os
 
 async def init():
-    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/df4cc9081a7df7184eb49b4a342b1290ef41ec04/olmConvert.py")
+    from js import location
+
+    if location.hostname == "localhost":
+        response = await pyfetch(f"{location.origin}/olmConvert.py")
+    else:
+        response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/heads/main/olmConvert.py?v=2.2")
     olm_convert_text = (await response.bytes()).decode("utf-8")
     with open("olmConvert.py", "w") as f:
         f.write(olm_convert_text)
 
-    response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/heads/main/format.html?v=2.0")
+    if location.hostname == "localhost":
+        response = await pyfetch(f"{location.origin}/format.html")
+    else:
+        response = await pyfetch("https://raw.githubusercontent.com/PeterWarrington/olm-convert/refs/heads/main/format.html?v=2.2")
     format_html = (await response.bytes())
     with open("format.html", "wb") as f:
         f.write(format_html)
