@@ -15,7 +15,7 @@ VERSION = 2.2
 
 # Command line interface
 def main():
-    parser = argparse.ArgumentParser(description='OLM Convert v2.1 - (https://lilpete.me/olm-convert)')
+    parser = argparse.ArgumentParser(description='OLM Convert v2.2 - (https://lilpete.me/olm-convert)')
 
     parser.add_argument('olmPath', type=argparse.FileType('rb'),
                     help='Path to OLM file')
