@@ -11,6 +11,8 @@ import html
 import os
 import uuid
 
+VERSION = 2.2
+
 # Command line interface
 def main():
     parser = argparse.ArgumentParser(description='OLM Convert v2.1 - (https://lilpete.me/olm-convert)')
@@ -161,36 +163,60 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
         subjectEmlStr = f"Subject: {subjectEmlValue}\n"
 
     # Read From field of email
-    senderElm = root[0].find("OPFMessageCopySenderAddress")
-    if (senderElm == None):
-        # Sender address could not be found in source, just don't set a sender address in EML header
+    fromElm = root[0].find("OPFMessageCopyFromAddresses")
+    if fromElm is None or len(fromElm) == 0:
         senderEmlStr = ""
+        senderDetailElm = None
     else:
-        if (len(senderElm) != 1):
-            raise ValueError(f"Expected 1 child of sender address, got {len(senderElm)}")
-        
-        senderDetailElm = senderElm.find("emailAddress")
-        if (senderDetailElm == None):
-            raise ValueError("No child email address detail element for sender found.")
+        senderDetailElm = fromElm.find("emailAddress")
+        if senderDetailElm is None:
+            senderEmlStr = ""
+        else:
+            senderEmlValue = addressEncode(senderDetailElm)
+            senderEmlStr = f"From: {senderEmlValue}\n"
 
-        senderEmlValue = addressEncode(senderDetailElm)
-        senderEmlStr = f"From: {senderEmlValue}\n"
-
-    # Read To field of email (does not support multiple people copied into email, in that case chooses 1st person copied to)
+    # Read To field of email
     recipientElm = root[0].find("OPFMessageCopyToAddresses")
-    if (recipientElm == None):
-        # Recipient address could not be found in source, just don't set a recipient address in EML header
+    if recipientElm is None or len(recipientElm) == 0:
         recipientEmlStr = ""
     else:
-        if (len(recipientElm) != 1):
-            warnings.warn(f"Multiple recipient addresses, choosing first only.")
-        
-        recipientDetailElm = recipientElm.find("emailAddress")
-        if (recipientDetailElm == None):
-            raise ValueError("No child email address detail element for recipient found.")
+        recipientAddresses = recipientElm.findall("emailAddress")
+        if not recipientAddresses:
+            recipientEmlStr = ""
+        else:
+            recipientList = [addressEncode(e, headerEncoding=False) for e in recipientAddresses]
+            recipientListEml = [addressEncode(e) for e in recipientAddresses]
+            recipientEmlStr = f"To: {', '.join(recipientListEml)}\n"
 
-        recipientEmlValue = addressEncode(recipientDetailElm)
-        recipientEmlStr = f"To: {recipientEmlValue}\n"
+    # Read Cc field of email
+    ccElm = root[0].find("OPFMessageCopyCCAddresses")
+    ccListEml = None
+    ccList = None
+    if ccElm is None or len(ccElm) == 0:
+        ccEmlStr = ""
+    else:
+        ccAddresses = ccElm.findall("emailAddress")
+        if ccAddresses:
+            ccList = [addressEncode(e, headerEncoding=False) for e in ccAddresses]
+            ccListEml = [addressEncode(e) for e in ccAddresses]
+            ccEmlStr = f"Cc: {', '.join(ccListEml)}\n"
+        else:
+            ccEmlStr = ""
+
+    # Read Bcc field of email
+    bccElm = root[0].find("OPFMessageCopyBCCAddresses")
+    bccListEml = None
+    bccList = None
+    if bccElm is None or len(bccElm) == 0:
+        bccEmlStr = ""
+    else:
+        bccAddresses = bccElm.findall("emailAddress")
+        if bccAddresses:
+            bccList = [addressEncode(e, headerEncoding=False) for e in bccAddresses]
+            bccListEml = [addressEncode(e) for e in bccAddresses]
+            bccEmlStr = f"Bcc: {', '.join(bccListEml)}\n"
+        else:
+            bccEmlStr = ""
 
     # Read message ID of email
     messageIdElm = root[0].find("OPFMessageCopyMessageID")
@@ -212,11 +238,11 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
 
     # Read thread index of email
     threadIndexElm = root[0].find("OPFMessageCopyThreadIndex")
-    if (threadIndexElm == None):
-        raise ValueError("Thread index could not be found in source.")
-
-    threadIndexEmlValue = threadIndexElm.text
-    threadIndexEmlStr = f"Thread-Index: {threadIndexEmlValue}\n"
+    if threadIndexElm is not None and threadIndexElm.text is not None:
+        threadIndexEmlValue = threadIndexElm.text
+        threadIndexEmlStr = f"Thread-Index: {threadIndexEmlValue}\n"
+    else:
+        threadIndexEmlStr = ""
 
     # Set other properties, as per MIME standard (necessary for attachments) 
     mimeVersionEmlStr = "Mime-version: 1.0\n"
@@ -242,7 +268,7 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
     if (htmlContentElm == None or htmlContentElm.text == None):
         warnings.warn("HTML content could not be found in source, ignoring")
     htmlContentRawSrcStr = htmlContentElm.text
-    htmlContentEmlStr = html.unescape(htmlContentRawSrcStr) + "\n"
+    htmlContentEmlStr = html.unescape(htmlContentRawSrcStr or "") + "\n"
     htmlContentEmlStr = lineWrapBody(htmlContentEmlStr)
 
     # Read attachments
@@ -266,6 +292,8 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
         outputString += subjectEmlStr
         outputString += senderEmlStr
         outputString += recipientEmlStr
+        outputString += ccEmlStr
+        outputString += bccEmlStr
         outputString += messageIdEmlStr
         outputString += topicEmlStr
         outputString += threadIndexEmlStr
@@ -287,17 +315,24 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
     elif format in ["html", "pdf"]:
         fromName = "Unknown"
         fromEmail = ""
-        toName = "Unknown"
-        toEmail = ""
+        toStr = "Unknown"
+        ccStr = ""
+        bccStr = ""
+
+        def htmlSanitize(str):
+            return str.replace("<", "&lt;").replace(">", "&gt;")
 
         try:
             if senderDetailElm is not None:
                 fromName = senderDetailElm.get("OPFContactEmailAddressName")
                 fromEmail = senderDetailElm.get("OPFContactEmailAddressAddress")
 
-            if recipientDetailElm is not None:
-                toName = recipientDetailElm.get("OPFContactEmailAddressName")
-                toEmail = recipientDetailElm.get("OPFContactEmailAddressAddress")
+            if recipientList is not None:
+                toStr = htmlSanitize(", ".join(recipientList))
+            if ccList is not None:
+                ccStr = htmlSanitize(", ".join(ccList))
+            if bccList is not None:
+                bccStr = htmlSanitize(", ".join(bccList))
         except UnboundLocalError:
             pass
 
@@ -306,9 +341,23 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
             .replace("$OLM_DATE", dateEmlValue)
             .replace("$OLM_FROM_NAME", fromName)
             .replace("$OLM_FROM_EMAIL", fromEmail)
-            .replace("$OLM_TO_NAME", toName)
-            .replace("$OLM_TO_EMAIL", toEmail)
-            .replace("$OLM_BODY", htmlContentRawSrcStr))
+            .replace("$OLM_TO_NAME &lt;$OLM_TO_EMAIL&gt;", toStr)
+            .replace("$OLM_BODY", htmlContentRawSrcStr)
+            .replace("$OLM_CC", ccStr)
+            .replace("$OLM_BCC", bccStr))
+
+        for if_match in re.finditer(r"(<!--\$OLM\[IF (.*)\]).*(-->)", outputString):
+            try:
+                if_condition = if_match.group(2)
+                if ((if_condition == "CC" and ccStr is not None and len(ccStr) > 0) or
+                    (if_condition == "BCC" and bccStr is not None and len(bccStr) > 0)):
+                    outputString = (outputString[:if_match.start(1)] +
+                            outputString[if_match.end(1):if_match.start(3)] +
+                            outputString[if_match.end(3):])
+
+            except Exception as e:
+                print(e)
+                continue
 
         attachmentsHtmlStr = ""
         if len(attachmentList) > 0:
@@ -330,18 +379,22 @@ def headerEncode(value):
     return f"=?UTF-8?B?{B64Str}?="
 
 # Convert <emailAddress> element to a email header value
-def addressEncode(addressElm):
+def addressEncode(addressElm, headerEncoding=True):
     rawName = addressElm.get("OPFContactEmailAddressName")
     if (rawName == None):
         warnings.warn("Email address name not found, ignoring.")
         rawName = ""
+
     encodedName = headerEncode(rawName)
 
     address = addressElm.get("OPFContactEmailAddressAddress")
     if (address == None):
         raise ValueError("Email address not found in emailAddress element.")
 
-    return f"{encodedName} <{address}>"
+    if headerEncoding:
+        return f"{encodedName} <{address}>"
+    else:
+        return f"{rawName} <{address}>"
 
 # Generate a UUID for a MIME boundary, as required by RFC2046 https://datatracker.ietf.org/doc/html/rfc2046#section-5.1.1
 def generateBoundaryUUID():
@@ -374,7 +427,14 @@ def processAttachment(attachmentElm, olmZip, format="eml"):
         attachmentContentIDEmlStr = f"Content-ID: <{attachmentContentIDraw}>\n"
 
     # Set content disposition header
-    attachmentContentDispositionEmlStr = f"""Content-disposition: attachment;\n\tfilename="{attachmentNameRaw}"\n"""
+    if attachmentContentIDraw:
+        # Inline Image
+        attachmentContentDispositionEmlStr = f"""Content-Disposition: inline;\n\tfilename="{attachmentNameRaw}"\n"""
+        attachmentContentIDEmlStr = f"Content-ID: <{attachmentContentIDraw}>\n"
+    else:
+        # Attachements
+        attachmentContentDispositionEmlStr = f"""Content-Disposition: attachment;\n\tfilename="{attachmentNameRaw}"\n"""
+        attachmentContentIDEmlStr = ""
 
     # Set attachment transfer encoding header
     attachmentContentEncodingEmlStr = "Content-transfer-encoding: base64\n"
