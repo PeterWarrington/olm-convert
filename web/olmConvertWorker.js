@@ -10,7 +10,7 @@ async function main() {
     // Pyodide is now ready to use...
     await pyodide.runPythonAsync(`
         from pyodide.http import pyfetch
-        response = await pyfetch("olmConvertWeb.py?v=2.1")
+        response = await pyfetch("olmConvertWeb.py?v=2.2")
         with open("olmConvertWeb.py", "wb") as f:
             f.write(await response.bytes())
     `);

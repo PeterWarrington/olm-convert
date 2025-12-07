@@ -89,6 +89,10 @@ def convertOLM(olmPath, outputDir, noAttachments=False, verbose=False, format="e
                 outputFile = open(newPath, "w", encoding='utf-8')
                 outputFile.write(messageEmlStr)
                 outputFile.close()
+
+                # Set timestamp on file (https://github.com/PeterWarrington/olm-convert/issues/7)
+                os.utime(newPath, times=(messageEml.date_datetime.timestamp(),)*2)
+
                 if (verbose):
                     sys.stdout.write(f"[{messageIndex}/{messageListLen}]: Written {newPath}\n")
             except Exception as e:
@@ -101,11 +105,13 @@ class ConvertedMessage:
     emlString = ""
     subject = ""
     date = ""
+    date_datetime = datetime.now()
 
-    def __init__(self, emlString, subject, date):
+    def __init__(self, emlString, subject, date, date_datetime=datetime.now()):
         self.emlString = emlString
         self.subject = subject
         self.date = date
+        self.date_datetime = date_datetime
 
 # Reads OLM format XML message (xmlString) and returns a ConvertedMessage object containing the message converted to a EML format string
 def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
@@ -316,7 +322,7 @@ def processMessage(xmlString, olmZip=None, noAttachments=False, format="eml"):
 
 
     # Return data
-    return ConvertedMessage(outputString, subjectSrcStr, dateEmlValue)
+    return ConvertedMessage(outputString, subjectSrcStr, dateEmlValue, date_datetime=srcDate)
 
 # Convert email header value to RFC2047 base64 encoded UTF-8 string (https://datatracker.ietf.org/doc/html/rfc2047)
 def headerEncode(value):
