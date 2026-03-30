@@ -4,7 +4,7 @@ The free, open-source, online OLM convertor.
 
 <img src="olmConvert.png" width="100px"/>
 
-[Use on the web](https://lilpete.me/olm-convert) | [Download the legacy version for desktop and command-line](https://lilpete.me/olm-convert-legacy)
+[Use on the web](https://olm-convert.lilpete.me/) | [Download the legacy version for desktop and command-line](https://lilpete.me/olm-convert-legacy)
 
 A utility to convert an Outlook for Mac archive (.olm file), that can only be opened with Outlook for Mac, to standard .html or .eml file formats, viewable in your browser.
 
